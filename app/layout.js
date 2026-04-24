@@ -25,18 +25,28 @@ export const metadata = {
     shortcut: ["/favicon.ico"],
   },
 };
-
-export const viewport = {
-  themeColor: "#000000",
-};
-
+// export const viewport = {
+  // themeColor: "#000000",
+// };
 export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-screen flex flex-col bg-[url('/background.jpg')]! bg-cover bg-center bg-no-repeat">{children}</body>
+      <body className="min-h-screen relative text-white">
+        <Background/>
+        <div className="relative z-10">
+          {children}
+        </div>
+      </body>
     </html>
   );
 }
+
+const Background = () => (
+  <>
+    <div className="absolute inset-0 bg-[url('/background.png')] bg-cover bg-center bg-no-repeat bg-fixed blur-md" />
+    <div className="absolute inset-0 bg-black/70" />
+  </>
+);

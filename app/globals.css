@@ -14,13 +14,37 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: rgb(46, 19, 21);
+    --background: rgb(7, 9, 26);
     --foreground: #ffffff;
   }
 }
 
-body {
-  background: var(--background);
+html {
+  background-color: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+@keyframes quote-ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.quote-ticker-track {
+  width: max-content;
+  display: flex;
+  align-items: center;
+  animation: quote-ticker 24s linear infinite;
+}
+
+.quote-ticker-inline {
+  width: max-content;
+  display: flex;
+  align-items: center;
+  will-change: transform;
+  animation: quote-ticker 20s linear infinite;
 }
