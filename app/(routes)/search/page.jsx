@@ -7,6 +7,7 @@
  */
 import { useMemo, useState } from "react";
 import { Jersey_10 } from "next/font/google";
+import Link from "next/link";
 
 const movieFont = Jersey_10({
   weight: ["400"],
@@ -130,7 +131,21 @@ export default function SearchPage() {
   }
 
   return (
-    <main className="min-h-screen px-6 py-16 md:py-20 flex items-center justify-center">
+    <main>
+      {/* Hyperlinks */}
+      <section className="absolute top-6 flex w-full justify-between px-6">
+        <div className="flex gap-4">
+          <Link href="/" className="hover:underline hover:text-blue-500">About</Link>
+          <Link href="/how" className="hover:underline hover:text-blue-500">How it Works</Link>
+        </div>
+        <div className="flex gap-4">
+          <Link href="https://www.regmovies.com/" className="hover:underline hover:text-blue-500">Movies Out Now</Link>
+          <Link href="/transcripts" className="hover:underline hover:text-blue-500">Transcripts</Link>
+        </div>
+      </section>
+
+      {/* Search */}
+      <div className="min-h-screen px-6 py-16 md:py-20 flex items-center justify-center">
       <section className="mx-auto w-full max-w-3xl text-center">
         <p className="text-xs uppercase tracking-[0.25em]">
           <span className="bg-linear-to-r from-blue-700 via-purple-700 to-indigo-800 bg-clip-text text-transparent">
@@ -190,6 +205,7 @@ export default function SearchPage() {
 
         <SearchResults data={responseData} hasSearched={hasSearched} />
       </section>
+      </div>
     </main>
   );
 }
