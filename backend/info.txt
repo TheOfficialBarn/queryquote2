@@ -1,0 +1,20 @@
+Oftentimes, there are movies with quotes which are more recognizable than the movie itself. Maybe one remembers a line from a movie that they watched and wishes to rewatch it. Maybe someone has never seen the film before, but wants to find it based on a quote.
+
+To solve this, we want to create an information retrieval system based on a movie database that we have in the movie-transcripts-59k folder.
+
+We are also planning to implement a punctuation-agnostic semantic search feature and fuzzy matching to account for misquotes and misspellings.
+
+We plan to implement the following algorithms:
+a. Core retrieval (first-stage search)
+    i. Inverted index over transcript text (term → postings list of documents/segments)
+    ii. TF-IDF Vector Space + Cosine Similarity baseline ranking
+    iii. BM25 baseline ranking
+b. We will likely implement with passage indexing versus scene/utterance level
+c. Quote-specific matching
+    i. Phrase search / positional index
+    ii. Proximity scoring
+    iii. Fuzzy matching for misquotes
+d. Evaluation
+    i. MAP / MRR / nDCG@K + precision/recall style analysis
+
+We figure that it would first need to go through some preprocessing (tokenization, normalization, stop word removal) and passage splitting.
