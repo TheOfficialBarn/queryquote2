@@ -1,12 +1,12 @@
 """Prologue:
 In-memory quote search engine that combines lexical ranking and quote-aware reranking.
-Last updated: 2026-04-25 - Added opt-in authority filtering so Metacritic
-vote counts can adjust ranking only when callers request it.
+Last updated: 2026-04-25 - Added lazy opt-in authority filtering so Metacritic
+vote counts adjust ranking only when callers request it.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from .authority import AuthorityIndex, load_default_authority_index
 from .config import ScoreWeights
@@ -21,7 +21,7 @@ from .types import SearchResult
 class SearchEngine:
     bundle: IndexBundle
     weights: ScoreWeights = ScoreWeights()
-    authority_index: AuthorityIndex = field(default_factory=load_default_authority_index)
+    authority_index: AuthorityIndex | None = None
 
     @classmethod
     def from_index_dir(cls, index_dir: str) -> "SearchEngine":
@@ -32,6 +32,11 @@ class SearchEngine:
         for term in query_terms:
             candidates.update(self.bundle.index.postings.get(term, {}).keys())
         return candidates
+
+    def _authority_index(self) -> AuthorityIndex:
+        if self.authority_index is None:
+            self.authority_index = load_default_authority_index()
+        return self.authority_index
 
     def search(
         self,
@@ -81,11 +86,12 @@ class SearchEngine:
             )
 
         if authority_filter:
+            authority_index = self._authority_index()
             for doc_id, score in list(final_scores.items()):
                 passage = passages_by_id.get(doc_id)
                 if passage is None:
                     continue
-                multiplier = self.authority_index.multiplier_for_movie_id(passage.movie_id)
+                multiplier = authority_index.multiplier_for_movie_id(passage.movie_id)
                 if multiplier is not None:
                     final_scores[doc_id] = score * multiplier
 
