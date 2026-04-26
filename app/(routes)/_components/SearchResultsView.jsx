@@ -3,8 +3,8 @@
 /**
  * Prologue:
  * Shared search results experience for QueryQuote route pages.
- * Last updated: 2026-04-26 - Extracted the live results layout so /search can
- * own normal query-string result URLs without depending on the debug route.
+ * Last updated: 2026-04-26 - Colored each query timer segment with pastel
+ * QueryQuote logo hues while preserving the HH:MM:SS:MMM layout.
  */
 import { useEffect, useMemo, useState } from "react";
 import { Jersey_10 } from "next/font/google";
@@ -66,6 +66,7 @@ function TopSearchBar({
   topK,
   authorityFilter,
   isSearching,
+  queryDurationMs,
   onQueryChange,
   onTopKChange,
   onAuthorityFilterChange,
@@ -73,7 +74,7 @@ function TopSearchBar({
 }) {
   return (
     <header className="sticky top-0 z-20 border-b border-white/15 bg-black/50 backdrop-blur-sm">
-      <div className="grid w-full grid-cols-1 pl-4 pr-3 py-4 sm:pl-6 sm:pr-4 lg:grid-cols-[1fr_325px]">
+      <div className="grid w-full grid-cols-1 gap-4 pl-4 pr-3 py-4 sm:pl-6 sm:pr-4 lg:grid-cols-[1fr_325px] lg:items-end">
         <div className="space-y-3">
           <Link href="/" className={`${movieFont.className} inline-block whitespace-nowrap text-3xl leading-none md:text-4xl`}>
             <span className="bg-linear-to-r from-blue-700 via-purple-700 to-indigo-800 bg-clip-text text-transparent">
@@ -100,6 +101,12 @@ function TopSearchBar({
               {isSearching ? "Searching..." : "Search"}
             </button>
           </form>
+        </div>
+        <div
+          className={`${movieFont.className} text-5xl text-white lg:justify-self-center`}
+          aria-live={isSearching ? "polite" : "off"}
+        >
+          <QueryDurationText durationMs={queryDurationMs} />
         </div>
       </div>
       <div className="grid w-full grid-cols-1 pl-4 pr-3 pb-3 sm:pl-6 sm:pr-4 lg:grid-cols-[1fr_300px]">
@@ -162,6 +169,41 @@ function ResultsEmptyState({ query, errorMessage }) {
   );
 }
 
+function formatQueryDuration(durationMs) {
+  const totalMs = Math.max(0, Math.floor(durationMs));
+  const milliseconds = totalMs % 1000;
+  const totalSeconds = Math.floor(totalMs / 1000);
+  const seconds = totalSeconds % 60;
+  const totalMinutes = Math.floor(totalSeconds / 60);
+  const minutes = totalMinutes % 60;
+  const hours = Math.floor(totalMinutes / 60);
+  const pad = (value, size = 2) => String(value).padStart(size, "0");
+
+  return {
+    hours: pad(hours),
+    minutes: pad(minutes),
+    seconds: pad(seconds),
+    milliseconds: pad(milliseconds, 3),
+  };
+}
+
+function QueryDurationText({ durationMs }) {
+  const duration = formatQueryDuration(durationMs ?? 0);
+  const separatorClassName = "text-white/45";
+
+  return (
+    <>
+      <span className="text-sky-200">{duration.hours}</span>
+      <span className={separatorClassName}>:</span>
+      <span className="text-violet-200">{duration.minutes}</span>
+      <span className={separatorClassName}>:</span>
+      <span className="text-fuchsia-200">{duration.seconds}</span>
+      <span className={separatorClassName}>:</span>
+      <span className="text-indigo-200">{duration.milliseconds}</span>
+    </>
+  );
+}
+
 function KnowledgePanel({ query, count, topK, authorityFilter }) {
   return (
     <aside className="rounded-2xl border border-white/15 bg-black/40 p-5">
@@ -198,6 +240,7 @@ export default function SearchResultsView({
   const [responseData, setResponseData] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [queryDurationMs, setQueryDurationMs] = useState(null);
 
   useEffect(() => {
     if (!initialQuery.trim()) {
@@ -207,8 +250,14 @@ export default function SearchResultsView({
     const controller = new AbortController();
 
     async function fetchResults() {
+      const startedAt = performance.now();
+      const timerId = window.setInterval(() => {
+        setQueryDurationMs(performance.now() - startedAt);
+      }, 33);
+
       setIsSearching(true);
       setErrorMessage("");
+      setQueryDurationMs(0);
 
       try {
         const response = await fetch("/api/search", {
@@ -239,7 +288,10 @@ export default function SearchResultsView({
         setResponseData({ results: [], count: 0 });
         setErrorMessage(error instanceof Error ? error.message : "Unexpected search error");
       } finally {
+        window.clearInterval(timerId);
+
         if (!controller.signal.aborted) {
+          setQueryDurationMs(performance.now() - startedAt);
           setIsSearching(false);
         }
       }
@@ -276,12 +328,13 @@ export default function SearchResultsView({
   }
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen my-16">
       <TopSearchBar
         query={query}
         topK={topK}
         authorityFilter={authorityFilter}
         isSearching={isSearching}
+        queryDurationMs={queryDurationMs}
         onQueryChange={setQuery}
         onTopKChange={setTopK}
         onAuthorityFilterChange={setAuthorityFilter}
