@@ -156,7 +156,7 @@ export default function SearchPage() {
           Find The Right Movie
         </h1>
         <p className="mt-4 mx-auto max-w-2xl text-white/80">
-          Search by exact quote or rough wording. We will help you track down the movie line you are thinking of.
+          Search by exact quote or rough wording. We will help you track down the movie & scene you are thinking of.
         </p>
 
         <form className="mt-8" onSubmit={handleSearch}>
