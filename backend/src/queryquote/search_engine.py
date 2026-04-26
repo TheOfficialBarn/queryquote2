@@ -1,7 +1,7 @@
 """Prologue:
 In-memory quote search engine that combines lexical ranking and quote-aware reranking.
-Last updated: 2026-04-25 - Added lazy opt-in authority filtering so Metacritic
-vote counts adjust ranking only when callers request it.
+Last updated: 2026-04-26 - Uses the shared Top 25 default when callers omit
+an explicit search result count.
 """
 
 from __future__ import annotations
@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .authority import AuthorityIndex, load_default_authority_index
-from .config import ScoreWeights
+from .config import DEFAULT_TOP_K, ScoreWeights
 from .indexing import IndexBundle, load_index
 from .preprocessing import tokenize
 from .quote_matching import fuzzy_ratio, has_exact_phrase, proximity_score
@@ -42,7 +42,7 @@ class SearchEngine:
         self,
         query: str,
         *,
-        top_k: int = 10,
+        top_k: int = DEFAULT_TOP_K,
         authority_filter: bool = False,
     ) -> list[SearchResult]:
         query_terms = tokenize(query, remove_stopwords=True)

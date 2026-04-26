@@ -1,7 +1,7 @@
 """Prologue:
 API-only Flask application for QueryQuote search endpoints.
-Last updated: 2026-04-25 - Added an opt-in authority filter request flag that
-lets clients rerank results with Metacritic vote-count weighting.
+Last updated: 2026-04-26 - Documents the shared Top 25 default for omitted
+search result counts.
 """
 
 from __future__ import annotations
@@ -59,7 +59,7 @@ def create_app(index_dir: str, backend: str = "sqlite") -> Flask:
         Request JSON:
             {
                 "query": "search query",
-                "top_k": 10,  (optional, default 10)
+                "top_k": 25,  (optional, default 25)
                 "authority_filter": false  (optional, default false)
             }
 

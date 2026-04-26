@@ -1,7 +1,7 @@
 """Prologue:
 SQLite-backed indexing and search for large QueryQuote transcript corpora.
-Last updated: 2026-04-25 - Added opt-in authority filtering to rerank SQLite
-search results with Metacritic vote-count multipliers when requested.
+Last updated: 2026-04-26 - Uses the shared Top 25 default when callers omit
+an explicit search result count.
 """
 
 from __future__ import annotations
@@ -15,6 +15,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 from .authority import AuthorityIndex, load_default_authority_index
+from .config import DEFAULT_TOP_K
 from .passages import iter_transcript_files, movie_id_from_filename, split_text_into_passages
 from .preprocessing import tokenize
 from .quote_matching import fuzzy_ratio
@@ -284,7 +285,7 @@ class SQLiteSearchEngine:
         self,
         query: str,
         *,
-        top_k: int = 10,
+        top_k: int = DEFAULT_TOP_K,
         authority_filter: bool = False,
     ) -> list[SearchResult]:
         """Search query using a thread-local database connection."""
@@ -305,7 +306,7 @@ class SQLiteSearchEngine:
         conn: sqlite3.Connection,
         query: str,
         *,
-        top_k: int = 10,
+        top_k: int = DEFAULT_TOP_K,
         authority_filter: bool = False,
     ) -> list[SearchResult]:
         query_terms = tokenize(query, remove_stopwords=True)

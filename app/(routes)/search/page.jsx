@@ -3,8 +3,8 @@
 /**
  * Prologue:
  * Search route UI for quote discovery with a search-first experience and quick filters.
- * Last updated: 2026-04-26 - Uses /search?q=... as the normal results URL
- * while keeping the blank /search route as the initial search form.
+ * Last updated: 2026-04-26 - Uses the shared Top 25 default for new searches
+ * and result URL normalization.
  */
 import { Suspense, useState } from "react";
 import { Jersey_10 } from "next/font/google";
@@ -12,7 +12,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import SearchResultsView, {
   buildSearchResultsUrl,
+  defaultSearchTopK,
   normalizeSearchTopK,
+  searchTopKOptions,
 } from "../_components/SearchResultsView";
 
 const movieFont = Jersey_10({
@@ -20,7 +22,6 @@ const movieFont = Jersey_10({
   subsets: ["latin"],
 });
 
-const topKOptions = [5, 10, 20];
 const tickerQuotes = [
   '"I\'ll be back"',
   '"Why so serious?"',
@@ -31,7 +32,7 @@ const tickerQuotes = [
 function TopKChips({ selectedTopK, onChange }) {
   return (
     <div className="mt-5 flex flex-wrap justify-center gap-2">
-      {topKOptions.map((option) => (
+      {searchTopKOptions.map((option) => (
         <button
           key={option}
           type="button"
@@ -73,7 +74,7 @@ function AuthorityFilterToggle({ enabled, onChange }) {
 function SearchLandingPage() {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const [topK, setTopK] = useState(10);
+  const [topK, setTopK] = useState(defaultSearchTopK);
   const [useAuthorityFilter, setUseAuthorityFilter] = useState(false);
 
   async function handleSearch(event) {

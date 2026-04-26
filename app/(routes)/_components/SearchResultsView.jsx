@@ -3,8 +3,8 @@
 /**
  * Prologue:
  * Shared search results experience for QueryQuote route pages.
- * Last updated: 2026-04-26 - Colored each query timer segment with pastel
- * QueryQuote logo hues while preserving the HH:MM:SS:MMM layout.
+ * Last updated: 2026-04-26 - Set the shared default result count to Top 25
+ * while keeping the selectable search count options in one place.
  */
 import { useEffect, useMemo, useState } from "react";
 import { Jersey_10 } from "next/font/google";
@@ -16,11 +16,12 @@ const movieFont = Jersey_10({
   subsets: ["latin"],
 });
 
-export const searchTopKOptions = [5, 10, 20];
+export const defaultSearchTopK = 25;
+export const searchTopKOptions = [5, 10, 20, defaultSearchTopK];
 
 export function normalizeSearchTopK(value) {
   const parsed = Number(value);
-  return searchTopKOptions.includes(parsed) ? parsed : 10;
+  return searchTopKOptions.includes(parsed) ? parsed : defaultSearchTopK;
 }
 
 export function buildSearchResultsUrl({
@@ -74,9 +75,9 @@ function TopSearchBar({
 }) {
   return (
     <header className="sticky top-0 z-20 border-b border-white/15 bg-black/50 backdrop-blur-sm">
-      <div className="grid w-full grid-cols-1 gap-4 pl-4 pr-3 py-4 sm:pl-6 sm:pr-4 lg:grid-cols-[1fr_325px] lg:items-end">
+      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-4 px-4 py-4 sm:px-6 lg:grid-cols-[1fr_325px] lg:items-end">
         <div className="space-y-3">
-          <Link href="/" className={`${movieFont.className} inline-block whitespace-nowrap text-3xl leading-none md:text-4xl`}>
+          <Link href="/search" className={`${movieFont.className} inline-block whitespace-nowrap text-3xl leading-none md:text-4xl`}>
             <span className="bg-linear-to-r from-blue-700 via-purple-700 to-indigo-800 bg-clip-text text-transparent">
               Query Quote
             </span>
@@ -109,16 +110,16 @@ function TopSearchBar({
           <QueryDurationText durationMs={queryDurationMs} />
         </div>
       </div>
-      <div className="grid w-full grid-cols-1 pl-4 pr-3 pb-3 sm:pl-6 sm:pr-4 lg:grid-cols-[1fr_300px]">
+      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 px-4 pb-3 sm:px-6 lg:grid-cols-[1fr_300px]">
         <div className="flex flex-wrap items-center gap-2">
           {searchTopKOptions.map((option) => (
             <button
               key={option}
               type="button"
               onClick={() => onTopKChange(option)}
-              className={`rounded-full border px-3 py-1 text-sm transition-colors ${
+              className={`rounded-full border px-3 py-1 text-sm transition-colors active:scale-95 ${
                 topK === option
-                  ? "border-blue-400/70 bg-blue-500/25 text-white"
+                  ? "border-blue-400/70 bg-blue-500/25"
                   : "border-white/20 bg-white/10 text-white/85 hover:bg-white/20"
               }`}
               aria-pressed={topK === option}
@@ -129,14 +130,14 @@ function TopSearchBar({
           <button
             type="button"
             onClick={() => onAuthorityFilterChange(!authorityFilter)}
-            className={`rounded-full border px-3 py-1 text-sm transition-colors ${
+            className={`rounded-full border px-3 py-1 text-sm transition-colors active:scale-95 ${
               authorityFilter
-                ? "border-emerald-300/70 bg-emerald-400/20 text-white"
-                : "border-white/20 bg-white/10 text-white/85 hover:bg-white/20"
+                ? "border-emerald-300/70 bg-emerald-400/60"
+                : "border-white/20 bg-emerald-600/60 hover:bg-emerald-500/60 "
             }`}
             aria-pressed={authorityFilter}
           >
-            Authority filter
+            Authority Boost
           </button>
         </div>
       </div>
@@ -328,7 +329,7 @@ export default function SearchResultsView({
   }
 
   return (
-    <main className="min-h-screen my-16">
+    <main className="min-h-screen">
       <TopSearchBar
         query={query}
         topK={topK}
@@ -341,7 +342,7 @@ export default function SearchResultsView({
         onSubmit={handleSubmit}
       />
 
-      <section className="grid w-full grid-cols-1 gap-6 pl-4 pr-3 py-6 sm:pl-6 sm:pr-4 lg:grid-cols-[1fr_300px]">
+      <section className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[1fr_300px]">
         <div>
           <p className="mb-4 text-sm text-white/60">{resultSummary}</p>
           <div className="space-y-4">

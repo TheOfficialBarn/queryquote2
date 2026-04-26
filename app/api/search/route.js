@@ -1,12 +1,13 @@
 /**
  * Prologue:
  * Server-side proxy route for quote search requests from the Next.js frontend.
- * Last updated: 2026-04-25 - Added opt-in authority filter passthrough so the
- * backend can weight rankings by Metacritic vote counts only when requested.
+ * Last updated: 2026-04-26 - Updated the proxy fallback result count to Top 25
+ * so omitted top_k requests match the frontend default.
  */
 import { NextResponse } from "next/server";
 
 const DEFAULT_BACKEND_BASE_URL = "http://127.0.0.1:5000";
+const DEFAULT_TOP_K = 25;
 
 function getBackendBaseUrl() {
   return process.env.QUERYQUOTE_API_BASE_URL || DEFAULT_BACKEND_BASE_URL;
@@ -16,7 +17,7 @@ export async function POST(request) {
   try {
     const body = await request.json();
     const query = typeof body?.query === "string" ? body.query.trim() : "";
-    const topK = Number.isInteger(body?.top_k) ? body.top_k : 10;
+    const topK = Number.isInteger(body?.top_k) ? body.top_k : DEFAULT_TOP_K;
     const authorityFilter = body?.authority_filter === true;
 
     if (!query) {

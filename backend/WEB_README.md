@@ -35,7 +35,7 @@ Default server address: `http://127.0.0.1:5000`
 ```json
 {
   "query": "your search query",
-  "top_k": 10,
+  "top_k": 25,
   "authority_filter": false
 }
 ```
