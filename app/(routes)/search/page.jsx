@@ -3,12 +3,17 @@
 /**
  * Prologue:
  * Search route UI for quote discovery with a search-first experience and quick filters.
- * Last updated: 2026-04-25 - Added an opt-in authority filter toggle that
- * sends Metacritic vote-count weighting only when selected by the user.
+ * Last updated: 2026-04-26 - Uses /search?q=... as the normal results URL
+ * while keeping the blank /search route as the initial search form.
  */
-import { useMemo, useState } from "react";
+import { Suspense, useState } from "react";
 import { Jersey_10 } from "next/font/google";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import SearchResultsView, {
+  buildSearchResultsUrl,
+  normalizeSearchTopK,
+} from "../_components/SearchResultsView";
 
 const movieFont = Jersey_10({
   weight: ["400"],
@@ -65,96 +70,27 @@ function AuthorityFilterToggle({ enabled, onChange }) {
   );
 }
 
-function SearchResults({ data, hasSearched }) {
-  const results = data?.results ?? [];
-
-  if (!hasSearched) {
-    return null;
-  }
-
-  if (!results.length) {
-    return (
-      <div className="mt-8 rounded-2xl border border-white/15 bg-white/5 p-4 text-left">
-        <p className="text-sm text-white/80">No matching quotes found.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="mt-8 space-y-3 text-left">
-      {results.map((result) => (
-        <article
-          key={result.passage_id}
-          className="rounded-2xl border border-white/15 bg-white/5 p-4"
-        >
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="text-lg font-semibold text-white/95">{result.movie_id}</h2>
-            <span className="text-xs text-white/70">Score: {Number(result.score).toFixed(3)}</span>
-          </div>
-          <p className="mt-2 text-sm text-white/85">{result.snippet}</p>
-          <p className="mt-3 text-xs text-white/60">Source: {result.source_file}</p>
-        </article>
-      ))}
-    </div>
-  );
-}
-
-export default function SearchPage() {
+function SearchLandingPage() {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [topK, setTopK] = useState(10);
-  const [responseData, setResponseData] = useState(null);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
   const [useAuthorityFilter, setUseAuthorityFilter] = useState(false);
-
-  const resultCountLabel = useMemo(() => {
-    if (!responseData || typeof responseData.count !== "number") {
-      return "";
-    }
-    const filterLabel = responseData.authority_filter ? " with authority filter" : "";
-    return `${responseData.count} result${responseData.count === 1 ? "" : "s"}${filterLabel}`;
-  }, [responseData]);
 
   async function handleSearch(event) {
     event.preventDefault();
 
     const trimmedQuery = query.trim();
-    if (!trimmedQuery || isSearching) {
+    if (!trimmedQuery) {
       return;
     }
 
-    setIsSearching(true);
-    setErrorMessage("");
-
-    try {
-      const response = await fetch("/api/search", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query: trimmedQuery,
-          top_k: topK,
-          authority_filter: useAuthorityFilter,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data?.error || "Search request failed");
-      }
-
-      setResponseData(data);
-      setHasSearched(true);
-    } catch (error) {
-      setResponseData({ results: [], count: 0 });
-      setHasSearched(true);
-      setErrorMessage(error instanceof Error ? error.message : "Unexpected search error");
-    } finally {
-      setIsSearching(false);
-    }
+    router.push(
+      buildSearchResultsUrl({
+        query: trimmedQuery,
+        topK,
+        authorityFilter: useAuthorityFilter,
+      }),
+    );
   }
 
   return (
@@ -213,10 +149,10 @@ export default function SearchPage() {
             </div>
             <button
               type="submit"
-              disabled={isSearching || !query.trim()}
+              disabled={!query.trim()}
               className="bg-black text-white rounded-full p-3 font-semibold tracking-tight transition-all duration-150 hover:bg-neutral-950 active:scale-95 focus-visible:ring-blue-500/60 disabled:cursor-not-allowed disabled:bg-neutral-700"
             >
-              {isSearching ? "Searching..." : "Search"}
+              Search
             </button>
           </div>
           <TopKChips selectedTopK={topK} onChange={setTopK} />
@@ -228,18 +164,38 @@ export default function SearchPage() {
           </div>
         </form>
 
-        {errorMessage ? (
-          <p className="mt-5 rounded-xl border border-red-300/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
-            {errorMessage}
-          </p>
-        ) : null}
-
-        {resultCountLabel ? <p className="mt-5 text-sm text-white/70">{resultCountLabel}</p> : null}
-
-        <SearchResults data={responseData} hasSearched={hasSearched} />
       </section>
       </div>
     </main>
+  );
+}
+
+function SearchPageContent() {
+  const searchParams = useSearchParams();
+  const initialQuery = searchParams.get("q") || "";
+  const initialTopK = normalizeSearchTopK(searchParams.get("top_k"));
+  const initialAuthorityFilter = searchParams.get("authority_filter") === "true";
+  const pageStateKey = `${initialQuery}-${initialTopK}-${initialAuthorityFilter}`;
+
+  if (initialQuery.trim()) {
+    return (
+      <SearchResultsView
+        key={pageStateKey}
+        initialQuery={initialQuery}
+        initialTopK={initialTopK}
+        initialAuthorityFilter={initialAuthorityFilter}
+      />
+    );
+  }
+
+  return <SearchLandingPage />;
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen p-6 text-white/70">Loading search...</main>}>
+      <SearchPageContent />
+    </Suspense>
   );
 }
 

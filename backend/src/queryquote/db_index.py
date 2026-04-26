@@ -317,7 +317,7 @@ class SQLiteSearchEngine:
 
         # Limit postings per term to avoid processing millions of documents
         # This makes search responsive even on huge indices
-        MAX_POSTINGS_PER_TERM = 50000
+        MAX_POSTINGS_PER_TERM = 10000
 
         for term, q_weight in qtf.items():
             row = conn.execute(
@@ -349,7 +349,9 @@ class SQLiteSearchEngine:
             return []
 
         # Use heapq for efficient top-k selection instead of sorting all docs
-        top_k_docs = heapq.nlargest(200, bm25_scores.items(), key=lambda x: x[1])
+        # ADJUSTED @ 11:31AM APRIL 26TH FOR SPEED
+
+        top_k_docs = heapq.nlargest(75, bm25_scores.items(), key=lambda x: x[1])
         rerank_ids = [doc_id for doc_id, _ in top_k_docs]
         
         # Normalize scores for reranking
