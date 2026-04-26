@@ -1372,3 +1372,141 @@ Close SQLite connection: 0.000499s
 ---
 Total Time: 6.298511s
 _________________________
+Query: "He's a man from outer space and we're taking him to his spaceship" | Authority Boost: Off
+Open SQLite connection: 0.001084s
+Tokenize query: 0.000042s
+Validate query and index metadata: 0.000001s
+Prepare BM25 query weights: 0.000019s
+Fetch postings and compute BM25 scores: 4.928302s
+Validate BM25 candidate scores: 0.000001s
+Check rerank pool for exact phrase candidates: 0.759553s
+Recover exact phrase candidates: 0.000086s
+Select rerank candidates: 0.000925s
+Normalize BM25 scores: 0.000888s
+Build rerank SQL placeholders: 0.000020s
+Fetch and decode rerank term positions: 0.066665s
+Fetch rerank passages: 0.269085s
+Apply quote-aware rerank scoring: 0.064340s
+Apply authority filter: 0.000000s
+Sort final scores: 0.001785s
+Fetch final result passages: 0.000383s
+Build SearchResult objects: 0.000026s
+Close SQLite connection: 0.000739s
+---
+Total Time: 6.094296s
+_________________________
+Query: "ET phone home" | Authority Boost: Off
+Open SQLite connection: 0.000651s
+Tokenize query: 0.000014s
+Validate query and index metadata: 0.000001s
+Prepare BM25 query weights: 0.000008s
+Fetch postings and compute BM25 scores: 3.657104s
+Validate BM25 candidate scores: 0.000001s
+Check rerank pool for exact phrase candidates: 0.066193s
+Recover exact phrase candidates: 1.809901s
+Select rerank candidates: 0.001130s
+Normalize BM25 scores: 0.000886s
+Build rerank SQL placeholders: 0.000017s
+Fetch and decode rerank term positions: 0.016739s
+Fetch rerank passages: 0.002314s
+Apply quote-aware rerank scoring: 0.051701s
+Apply authority filter: 0.000009s
+Sort final scores: 0.001763s
+Fetch final result passages: 0.000298s
+Build SearchResult objects: 0.000023s
+Close SQLite connection: 0.000356s
+---
+Total Time: 5.609337s
+_________________________
+Query: "Back to school! Back to school, to prove to Dad that I'm not a fool!" | Authority Boost: On
+Open SQLite connection: 0.001082s
+Tokenize query: 0.000024s
+Validate query and index metadata: 0.000001s
+Prepare BM25 query weights: 0.000010s
+Fetch postings and compute BM25 scores: 4.473355s
+Validate BM25 candidate scores: 0.000000s
+Check rerank pool for exact phrase candidates: 0.492244s
+Recover exact phrase candidates: 0.000042s
+Select rerank candidates: 0.001096s
+Normalize BM25 scores: 0.000958s
+Build rerank SQL placeholders: 0.000021s
+Fetch and decode rerank term positions: 0.034645s
+Fetch rerank passages: 0.304834s
+Apply quote-aware rerank scoring: 0.070663s
+Apply authority filter: 0.027108s
+Sort final scores: 0.001420s
+Fetch final result passages: 0.000530s
+Build SearchResult objects: 0.000023s
+Close SQLite connection: 0.000749s
+---
+Total Time: 5.409203s
+_________________________
+Query: "You stupid ball. Why didn't you just go home" | Authority Boost: On
+Open SQLite connection: 0.001386s
+Tokenize query: 0.000023s
+Validate query and index metadata: 0.000001s
+Prepare BM25 query weights: 0.000013s
+Fetch postings and compute BM25 scores: 4.099431s
+Validate BM25 candidate scores: 0.000001s
+Check rerank pool for exact phrase candidates: 0.755421s
+Recover exact phrase candidates: 0.000007s
+Select rerank candidates: 0.001169s
+Normalize BM25 scores: 0.001008s
+Build rerank SQL placeholders: 0.000019s
+Fetch and decode rerank term positions: 0.013695s
+Fetch rerank passages: 0.281541s
+Apply quote-aware rerank scoring: 0.056075s
+Apply authority filter: 0.026265s
+Sort final scores: 0.001439s
+Fetch final result passages: 0.000355s
+Build SearchResult objects: 0.000023s
+Close SQLite connection: 0.000767s
+---
+Total Time: 5.238942s
+_________________________
+Query: "Here's looking at you, kid" | Authority Boost: On
+Open SQLite connection: 0.001444s
+Tokenize query: 0.000196s
+Validate query and index metadata: 0.000001s
+Prepare BM25 query weights: 0.000148s
+Fetch postings and compute BM25 scores: 3.461365s
+Validate BM25 candidate scores: 0.000001s
+Check rerank pool for exact phrase candidates: 0.380194s
+Recover exact phrase candidates: 12.693873s
+Select rerank candidates: 0.001241s
+Normalize BM25 scores: 0.000978s
+Build rerank SQL placeholders: 0.000018s
+Fetch and decode rerank term positions: 0.649830s
+Fetch rerank passages: 0.053614s
+Apply quote-aware rerank scoring: 0.052420s
+Apply authority filter: 0.027925s
+Sort final scores: 0.001413s
+Fetch final result passages: 0.000369s
+Build SearchResult objects: 0.000031s
+Close SQLite connection: 0.000391s
+---
+Total Time: 17.325833s
+_________________________
+Query: "yellow brick road" | Authority Boost: On
+Open SQLite connection: 0.001557s
+Tokenize query: 0.000038s
+Validate query and index metadata: 0.000001s
+Prepare BM25 query weights: 0.000022s
+Fetch postings and compute BM25 scores: 5.294447s
+Validate BM25 candidate scores: 0.000000s
+Check rerank pool for exact phrase candidates: 0.161552s
+Recover exact phrase candidates: 1.712661s
+Select rerank candidates: 0.001453s
+Normalize BM25 scores: 0.000995s
+Build rerank SQL placeholders: 0.000019s
+Fetch and decode rerank term positions: 0.048257s
+Fetch rerank passages: 0.052781s
+Apply quote-aware rerank scoring: 0.061816s
+Apply authority filter: 0.041527s
+Sort final scores: 0.001813s
+Fetch final result passages: 0.000431s
+Build SearchResult objects: 0.000063s
+Close SQLite connection: 0.000711s
+---
+Total Time: 7.380478s
+_________________________

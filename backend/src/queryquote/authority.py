@@ -1,8 +1,8 @@
 """Prologue:
 CSV-backed authority scoring for opt-in movie ranking adjustments.
-Last updated: 2026-04-25 - Added Metacritic vote-count loading and bounded
-ranking multipliers so high-vote movies can be boosted and sparse-vote movies
-can be penalized only when the authority filter is enabled.
+Last updated: 2026-04-26 - Switched the default source to the compact
+authority CSV so ranking metadata stays small while preserving vote-based
+multiplier behavior.
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Iterable
 
 
-DEFAULT_AUTHORITY_CSV_PATH = Path(__file__).resolve().parents[2] / "authority.csv"
+DEFAULT_AUTHORITY_CSV_PATH = Path(__file__).resolve().parents[2] / "authority_compact.csv"
 MIN_AUTHORITY_MULTIPLIER = 0.75
 MAX_AUTHORITY_MULTIPLIER = 1.25
 
