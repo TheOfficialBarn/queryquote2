@@ -1,3 +1,11 @@
+/**
+ * Prologue:
+ * Root application layout for global metadata, fonts, and shared background treatment.
+ * The viewport theme color is defined here so browser chrome, including Safari's
+ * toolbar tint, reflects the app background instead of falling back to default UI.
+ * Last updated: 2026-04-25 - Moved the shared image backdrop to a dedicated fixed
+ * layer so the background stays pinned without scroll wobble.
+ */
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -25,17 +33,15 @@ export const metadata = {
     shortcut: ["/favicon.ico"],
   },
 };
-// export const viewport = {
-  // themeColor: "#000000",
-// };
+
 export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-screen relative text-white">
-        <Background/>
+      <body className="min-h-screen relative bg-[#07091a] text-white">
+        <Background />
         <div className="relative z-10">
           {children}
         </div>
@@ -45,8 +51,8 @@ export default function RootLayout({ children }) {
 }
 
 const Background = () => (
-  <>
-    <div className="absolute inset-0 bg-[url('/background.png')] bg-cover bg-center bg-no-repeat bg-fixed blur-md" />
+  <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+    <div className="absolute inset-[-2%] bg-[url('/background.png')] bg-cover bg-center bg-no-repeat blur-sm scale-105" />
     <div className="absolute inset-0 bg-black/70" />
-  </>
+  </div>
 );

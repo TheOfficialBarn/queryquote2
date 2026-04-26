@@ -67,7 +67,7 @@ export default function Home() {
           </span>
         </h1>
         <p className="text-lg max-w-xl mb-8">
-          Welcome to <span className={`${movieFont.className} text-2xl bg-linear-to-r from-blue-700 via-purple-700 to-indigo-800 bg-clip-text text-transparent`}>Query Quote</span>, a movie-quote search engine built to find your favorite movies when it's on the tip of your tongue. Try it today!
+          Welcome to <span className={`${movieFont.className} text-2xl bg-linear-to-r from-blue-700 via-purple-700 to-indigo-800 bg-clip-text text-transparent`}>Query Quote</span>, a movie-quote search engine built to find your favorite movies when it&apos;s on the tip of your tongue. Try it today!
         </p>
 
         <Link
