@@ -1,7 +1,7 @@
 """Prologue:
 SQLite-backed indexing and search for large QueryQuote transcript corpora.
-Last updated: 2026-04-26 - Adds Authority Boost state to each appended
-backend/time.txt query timing block for clearer performance comparisons.
+Last updated: 2026-04-26 - Caps discriminative-term BM25 candidates at 10k
+to avoid common-term scans while preserving full-query quote reranking.
 """
 
 from __future__ import annotations
@@ -25,6 +25,10 @@ from .types import SearchResult
 
 
 DEFAULT_TIMING_LOG_PATH = Path(__file__).resolve().parents[2] / "time.txt"
+MAX_BM25_CANDIDATES = 10000
+MAX_SEED_TERMS = 8
+MAX_SEED_TERM_DF = 250000
+FALLBACK_SEED_TERMS = 3
 
 
 @dataclass(slots=True)
@@ -303,6 +307,107 @@ def _movie_id_from_passage_id(passage_id: str) -> str:
     return passage_id.rsplit("::", 1)[0]
 
 
+def _bm25_scores_from_conn(
+    conn: sqlite3.Connection,
+    qtf: Counter[str],
+    *,
+    num_docs: int,
+    avg_doc_len: float,
+    max_postings_per_term: int,
+) -> dict[str, float]:
+    term_stats: dict[str, tuple[int, float, int]] = {}
+
+    for term, q_weight in qtf.items():
+        row = conn.execute(
+            "SELECT df FROM term_stats WHERE term = ?",
+            (term,),
+        ).fetchone()
+        if not row:
+            continue
+
+        df = int(row[0])
+        idf = math.log(1.0 + ((num_docs - df + 0.5) / (df + 0.5)))
+        term_stats[term] = (q_weight, idf, df)
+
+    if not term_stats:
+        return {}
+
+    seed_terms = _select_bm25_seed_terms(term_stats)
+    candidate_scores: defaultdict[str, float] = defaultdict(float)
+    for term in seed_terms:
+        q_weight, idf, _ = term_stats[term]
+        for (passage_id,) in conn.execute(
+            """
+            SELECT passage_id
+            FROM postings
+            WHERE term = ?
+            LIMIT ?
+            """,
+            (term, max_postings_per_term),
+        ):
+            candidate_scores[passage_id] += idf * q_weight
+
+    if not candidate_scores:
+        return {}
+
+    candidate_ids = _top_candidate_ids(candidate_scores, max_candidates=MAX_BM25_CANDIDATES)
+    scoring_terms = seed_terms
+    term_placeholders = ",".join("?" for _ in scoring_terms)
+    chunk_size = max(1, 900 - len(scoring_terms))
+    scores: defaultdict[str, float] = defaultdict(float)
+    average_length = avg_doc_len or 1.0
+
+    for start in range(0, len(candidate_ids), chunk_size):
+        chunk = candidate_ids[start : start + chunk_size]
+        passage_placeholders = ",".join("?" for _ in chunk)
+        rows = conn.execute(
+            f"""
+            SELECT p.term, p.passage_id, p.tf, d.doc_len
+            FROM postings p
+            JOIN doc_stats d ON d.passage_id = p.passage_id
+            WHERE p.term IN ({term_placeholders})
+              AND p.passage_id IN ({passage_placeholders})
+            """,
+            (*scoring_terms, *chunk),
+        )
+
+        for term, doc_id, tf, doc_len in rows:
+            q_weight, idf, _ = term_stats[term]
+            denom = tf + 1.5 * (1 - 0.75 + 0.75 * (doc_len / average_length))
+            scores[doc_id] += idf * ((tf * 2.5) / (denom or 1e-9)) * q_weight
+
+    return dict(scores)
+
+
+def _select_bm25_seed_terms(term_stats: dict[str, tuple[int, float, int]]) -> list[str]:
+    terms_by_rarity = sorted(term_stats, key=lambda term: term_stats[term][2])
+    seed_terms = [
+        term
+        for term in terms_by_rarity
+        if term_stats[term][2] <= MAX_SEED_TERM_DF
+    ][:MAX_SEED_TERMS]
+    if seed_terms:
+        return seed_terms
+    return terms_by_rarity[:FALLBACK_SEED_TERMS]
+
+
+def _top_candidate_ids(
+    candidate_scores: dict[str, float],
+    *,
+    max_candidates: int,
+) -> list[str]:
+    if len(candidate_scores) <= max_candidates:
+        return list(candidate_scores)
+    return [
+        passage_id
+        for passage_id, _ in heapq.nlargest(
+            max_candidates,
+            candidate_scores.items(),
+            key=lambda item: item[1],
+        )
+    ]
+
+
 class SQLiteSearchEngine:
     def __init__(
         self,
@@ -387,31 +492,13 @@ class SQLiteSearchEngine:
         MAX_POSTINGS_PER_TERM = 40000
 
         started_at = time.perf_counter()
-        for term, q_weight in qtf.items():
-            row = conn.execute(
-                "SELECT df FROM term_stats WHERE term = ?",
-                (term,),
-            ).fetchone()
-            if not row:
-                continue
-            df = int(row[0])
-            idf = math.log(1.0 + ((self.num_docs - df + 0.5) / (df + 0.5)))
-
-            # Limit postings per term for large indices
-            for doc_id, tf, dl in conn.execute(
-                """
-                SELECT p.passage_id, p.tf, d.doc_len
-                FROM postings p
-                JOIN doc_stats d ON d.passage_id = p.passage_id
-                WHERE p.term = ?
-                LIMIT ?
-                """,
-                (term, MAX_POSTINGS_PER_TERM),
-            ):
-                tf = int(tf)
-                dl = int(dl)
-                denom = tf + 1.5 * (1 - 0.75 + 0.75 * (dl / (self.avg_doc_len or 1.0)))
-                bm25_scores[doc_id] += idf * ((tf * (1.5 + 1)) / (denom or 1e-9)) * q_weight
+        bm25_scores = _bm25_scores_from_conn(
+            conn,
+            qtf,
+            num_docs=self.num_docs,
+            avg_doc_len=self.avg_doc_len,
+            max_postings_per_term=MAX_POSTINGS_PER_TERM,
+        )
         _record_timing(timing, "Fetch postings and compute BM25 scores", started_at)
 
         started_at = time.perf_counter()
