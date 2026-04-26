@@ -7,18 +7,12 @@
  * each major content panel settle into place during vertical scrolling.
  */
 import { Jersey_10 } from "next/font/google";
-import Link from "next/link";
+import RouteBackLink from "../_components/RouteBackLink";
 
 const movieFont = Jersey_10({
   weight: ["400"],
   subsets: ["latin"],
 });
-
-const navLinks = [
-  { href: "/", label: "About" },
-  { href: "/search", label: "Search" },
-  { href: "/transcripts", label: "Transcripts" },
-];
 
 const overviewItems = [
   ["Frontend", "Next.js 16 App Router, React 19, Tailwind CSS 4"],
@@ -179,18 +173,7 @@ export default function HowPage() {
   return (
     <main className="h-screen snap-y snap-mandatory overflow-y-auto px-6 py-8 md:px-8 md:py-10">
       <div className="mx-auto max-w-6xl">
-        <nav className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5 text-sm text-white/75">
-          <div className="flex flex-wrap items-center gap-4">
-            {navLinks.map((link) => (
-              <Link key={link.href} href={link.href} className="transition-colors hover:text-blue-300">
-                {link.label}
-              </Link>
-            ))}
-          </div>
-          <a href="https://www.regmovies.com/" className="transition-colors hover:text-blue-300">
-            Movies Out Now
-          </a>
-        </nav>
+        <RouteBackLink />
 
         <div className="mt-10 grid min-h-[calc(100vh-8rem)] snap-end items-start gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           <header className="max-w-3xl">
