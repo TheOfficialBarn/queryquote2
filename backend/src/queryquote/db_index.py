@@ -1,7 +1,7 @@
 """Prologue:
 SQLite-backed indexing and search for large QueryQuote transcript corpora.
-Last updated: 2026-04-26 - Caps discriminative-term BM25 candidates at 10k
-to avoid common-term scans while preserving full-query quote reranking.
+Last updated: 2026-04-26 - Uses authoritative early exact-phrase detection,
+rare-term recovery, and stronger quote reranking while keeping BM25 seeding fast.
 """
 
 from __future__ import annotations
@@ -26,9 +26,18 @@ from .types import SearchResult
 
 DEFAULT_TIMING_LOG_PATH = Path(__file__).resolve().parents[2] / "time.txt"
 MAX_BM25_CANDIDATES = 10000
+RERANK_POOL_SIZE = 500
 MAX_SEED_TERMS = 8
 MAX_SEED_TERM_DF = 250000
+MAX_EXACT_PHRASE_SEED_POSTINGS = 120000
+MAX_EXACT_PHRASE_TERMS = 6
 FALLBACK_SEED_TERMS = 3
+EXACT_PHRASE_BOOST = 1.75
+EXACT_PHRASE_BASE_WEIGHT = 0.10
+PROXIMITY_BOOST = 0.55
+COVERAGE_BOOST = 0.20
+FUZZY_BOOST = 0.15
+EXACT_AUTHORITY_BOOST = 0.35
 
 
 @dataclass(slots=True)
@@ -303,6 +312,17 @@ def _proximity_score_from_positions(
     return window / best
 
 
+def _query_term_coverage(
+    query_terms: list[str],
+    positions_by_term: dict[str, list[int]],
+) -> float:
+    unique_query_terms = set(query_terms)
+    if not unique_query_terms:
+        return 0.0
+    covered_terms = sum(1 for term in unique_query_terms if term in positions_by_term)
+    return covered_terms / len(unique_query_terms)
+
+
 def _movie_id_from_passage_id(passage_id: str) -> str:
     return passage_id.rsplit("::", 1)[0]
 
@@ -334,6 +354,7 @@ def _bm25_scores_from_conn(
 
     seed_terms = _select_bm25_seed_terms(term_stats)
     candidate_scores: defaultdict[str, float] = defaultdict(float)
+    average_length = avg_doc_len or 1.0
     for term in seed_terms:
         q_weight, idf, _ = term_stats[term]
         for (passage_id,) in conn.execute(
@@ -345,6 +366,8 @@ def _bm25_scores_from_conn(
             """,
             (term, max_postings_per_term),
         ):
+            # Candidate seeding only decides which passages deserve full BM25 scoring.
+            # Full scoring below applies BM25's term-frequency saturation.
             candidate_scores[passage_id] += idf * q_weight
 
     if not candidate_scores:
@@ -355,7 +378,6 @@ def _bm25_scores_from_conn(
     term_placeholders = ",".join("?" for _ in scoring_terms)
     chunk_size = max(1, 900 - len(scoring_terms))
     scores: defaultdict[str, float] = defaultdict(float)
-    average_length = avg_doc_len or 1.0
 
     for start in range(0, len(candidate_ids), chunk_size):
         chunk = candidate_ids[start : start + chunk_size]
@@ -405,6 +427,85 @@ def _top_candidate_ids(
             candidate_scores.items(),
             key=lambda item: item[1],
         )
+    ]
+
+
+def _exact_phrase_candidate_ids_from_conn(
+    conn: sqlite3.Connection,
+    query_terms: list[str],
+) -> list[str]:
+    if len(query_terms) < 2:
+        return []
+
+    unique_query_terms = list(dict.fromkeys(query_terms))
+    if len(unique_query_terms) > MAX_EXACT_PHRASE_TERMS:
+        return []
+
+    term_stats: dict[str, int] = {}
+    for term in unique_query_terms:
+        row = conn.execute(
+            "SELECT df FROM term_stats WHERE term = ?",
+            (term,),
+        ).fetchone()
+        if row:
+            term_stats[term] = int(row[0])
+
+    if not term_stats:
+        return []
+
+    rarest_term = min(term_stats, key=lambda term: term_stats[term])
+    rows = conn.execute(
+        """
+        SELECT s.passage_id, p.raw_text
+        FROM postings s
+        JOIN passages p ON p.passage_id = s.passage_id
+        WHERE s.term = ?
+        LIMIT ?
+        """,
+        (rarest_term, MAX_EXACT_PHRASE_SEED_POSTINGS),
+    )
+
+    exact_phrase_ids: list[str] = []
+    query_term_set = set(query_terms)
+    for passage_id, raw_text in rows:
+        positions_by_term: dict[str, list[int]] = defaultdict(list)
+        for position, term in enumerate(tokenize(raw_text, remove_stopwords=True)):
+            if term in query_term_set:
+                positions_by_term[term].append(position)
+        if _has_exact_phrase_from_positions(query_terms, positions_by_term):
+            exact_phrase_ids.append(passage_id)
+
+    return exact_phrase_ids
+
+
+def _exact_phrase_ids_in_candidates(
+    conn: sqlite3.Connection,
+    query_terms: list[str],
+    candidate_ids: list[str],
+) -> list[str]:
+    if len(query_terms) < 2 or not candidate_ids:
+        return []
+
+    passage_placeholders = ",".join("?" for _ in candidate_ids)
+    term_placeholders = ",".join("?" for _ in query_terms)
+    rows = conn.execute(
+        f"""
+        SELECT term, passage_id, positions
+        FROM postings
+        WHERE term IN ({term_placeholders})
+          AND passage_id IN ({passage_placeholders})
+        """,
+        (*query_terms, *candidate_ids),
+    ).fetchall()
+
+    positions_map: dict[str, dict[str, list[int]]] = defaultdict(dict)
+    for term, passage_id, positions_json in rows:
+        positions_map[passage_id][term] = json.loads(positions_json)
+
+    return [
+        passage_id
+        for passage_id in candidate_ids
+        if _has_exact_phrase_from_positions(query_terms, positions_map.get(passage_id, {}))
     ]
 
 
@@ -507,12 +608,64 @@ class SQLiteSearchEngine:
         if not has_bm25_scores:
             return []
 
-        # Use heapq for efficient top-k selection instead of sorting all docs
-        # ADJUSTED @ 11:31AM APRIL 26TH FOR SPEED
+        started_at = time.perf_counter()
+        preliminary_rerank_ids = [
+            doc_id
+            for doc_id, _ in heapq.nlargest(
+                RERANK_POOL_SIZE,
+                bm25_scores.items(),
+                key=lambda x: x[1],
+            )
+        ]
+        exact_phrase_ids = _exact_phrase_ids_in_candidates(
+            conn,
+            query_terms,
+            preliminary_rerank_ids,
+        )
+        _record_timing(timing, "Check rerank pool for exact phrase candidates", started_at)
 
         started_at = time.perf_counter()
-        top_k_docs = heapq.nlargest(200, bm25_scores.items(), key=lambda x: x[1])
-        rerank_ids = [doc_id for doc_id, _ in top_k_docs]
+        has_authoritative_exact = any(
+            (
+                self.authority_index.multiplier_for_movie_id(
+                    _movie_id_from_passage_id(passage_id)
+                )
+                or 0.0
+            )
+            >= 1.1
+            for passage_id in exact_phrase_ids
+        )
+        if not has_authoritative_exact:
+            recovered_exact_phrase_ids = _exact_phrase_candidate_ids_from_conn(
+                conn,
+                query_terms,
+            )
+            exact_phrase_ids = list(
+                dict.fromkeys([*exact_phrase_ids, *recovered_exact_phrase_ids])
+            )
+        if exact_phrase_ids:
+            for passage_id in exact_phrase_ids:
+                bm25_scores.setdefault(passage_id, 0.0)
+        _record_timing(timing, "Recover exact phrase candidates", started_at)
+
+        # Use heapq for efficient top-k selection instead of sorting all docs.
+
+        started_at = time.perf_counter()
+        exact_phrase_ids = sorted(
+            set(exact_phrase_ids),
+            key=lambda passage_id: (
+                self.authority_index.multiplier_for_movie_id(
+                    _movie_id_from_passage_id(passage_id)
+                )
+                or 0.0,
+                bm25_scores.get(passage_id, 0.0),
+            ),
+            reverse=True,
+        )
+        top_k_docs = heapq.nlargest(RERANK_POOL_SIZE, bm25_scores.items(), key=lambda x: x[1])
+        rerank_ids = list(
+            dict.fromkeys([*exact_phrase_ids, *[doc_id for doc_id, _ in top_k_docs]])
+        )[:RERANK_POOL_SIZE]
         _record_timing(timing, "Select rerank candidates", started_at)
 
         started_at = time.perf_counter()
@@ -562,8 +715,22 @@ class SQLiteSearchEngine:
                 pos = positions_map.get(doc_id, {})
                 phrase = 1.0 if _has_exact_phrase_from_positions(query_terms, pos) else 0.0
                 prox = _proximity_score_from_positions(query_terms, pos)
+                coverage = _query_term_coverage(query_terms, pos)
                 fuzz = fuzzy_ratio(query, raw_text)
-                base_scores[doc_id] += 0.25 * phrase + 0.20 * prox + 0.20 * fuzz
+                if phrase:
+                    base_scores[doc_id] *= EXACT_PHRASE_BASE_WEIGHT
+                authority_phrase_boost = 0.0
+                if phrase:
+                    multiplier = self.authority_index.multiplier_for_movie_id(info[1])
+                    if multiplier is not None:
+                        authority_phrase_boost = EXACT_AUTHORITY_BOOST * multiplier
+                base_scores[doc_id] += (
+                    EXACT_PHRASE_BOOST * phrase
+                    + PROXIMITY_BOOST * prox
+                    + COVERAGE_BOOST * coverage
+                    + FUZZY_BOOST * fuzz
+                    + authority_phrase_boost
+                )
             _record_timing(timing, "Apply quote-aware rerank scoring", started_at)
 
         started_at = time.perf_counter()
