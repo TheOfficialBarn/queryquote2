@@ -1,6 +1,6 @@
 """Prologue:
 In-memory quote search engine that combines lexical ranking and quote-aware reranking.
-Last updated: 2026-04-26 - Uses the shared Top 25 default when callers omit
+Last updated: 2026-04-26 - Uses the shared Top 50 default when callers omit
 an explicit search result count.
 """
 

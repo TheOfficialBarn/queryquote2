@@ -1,6 +1,6 @@
 """Prologue:
 API-only Flask application for QueryQuote search endpoints.
-Last updated: 2026-04-26 - Documents the shared Top 25 default for omitted
+Last updated: 2026-04-26 - Documents the shared Top 50 default for omitted
 search result counts.
 """
 
@@ -59,7 +59,7 @@ def create_app(index_dir: str, backend: str = "sqlite") -> Flask:
         Request JSON:
             {
                 "query": "search query",
-                "top_k": 25,  (optional, default 25)
+                "top_k": 50,  (optional, default 50)
                 "authority_filter": false  (optional, default false)
             }
 

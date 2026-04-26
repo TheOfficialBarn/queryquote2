@@ -1,0 +1,21 @@
+Query: "avada kedavra" | Authority Boost: Off
+Open SQLite connection: 0.000395s
+Tokenize query: 0.000016s
+Validate query and index metadata: 0.000001s
+Prepare BM25 query weights: 0.000033s
+Fetch postings and compute BM25 scores: 0.022522s
+Validate BM25 candidate scores: 0.000001s
+Select rerank candidates: 0.000015s
+Normalize BM25 scores: 0.000010s
+Build rerank SQL placeholders: 0.000004s
+Fetch and decode rerank term positions: 0.001676s
+Fetch rerank passages: 0.010973s
+Apply quote-aware rerank scoring: 0.004221s
+Apply authority filter: 0.000000s
+Sort final scores: 0.000006s
+Fetch final result passages: 0.000154s
+Build SearchResult objects: 0.000022s
+Close SQLite connection: 0.000456s
+---
+Total Time: 0.040534s
+_________________________

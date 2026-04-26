@@ -1,13 +1,13 @@
 /**
  * Prologue:
  * Server-side proxy route for quote search requests from the Next.js frontend.
- * Last updated: 2026-04-26 - Updated the proxy fallback result count to Top 25
- * so omitted top_k requests match the frontend default.
+ * Last updated: 2026-04-26 - Updated the proxy fallback result count to Top 50
+ * so omitted top_k requests match the fixed paginated frontend behavior.
  */
 import { NextResponse } from "next/server";
 
 const DEFAULT_BACKEND_BASE_URL = "http://127.0.0.1:5000";
-const DEFAULT_TOP_K = 25;
+const DEFAULT_TOP_K = 50;
 
 function getBackendBaseUrl() {
   return process.env.QUERYQUOTE_API_BASE_URL || DEFAULT_BACKEND_BASE_URL;

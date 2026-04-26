@@ -3,8 +3,8 @@
 /**
  * Prologue:
  * Shared search results experience for QueryQuote route pages.
- * Last updated: 2026-04-26 - Set the shared default result count to Top 25
- * while keeping the selectable search count options in one place.
+ * Last updated: 2026-04-26 - Replaced variable Top K controls with fixed
+ * Top 50 retrieval and two client-side result pages.
  */
 import { useEffect, useMemo, useState } from "react";
 import { Jersey_10 } from "next/font/google";
@@ -16,23 +16,23 @@ const movieFont = Jersey_10({
   subsets: ["latin"],
 });
 
-export const defaultSearchTopK = 25;
-export const searchTopKOptions = [5, 10, 20, defaultSearchTopK];
+export const defaultSearchTopK = 50;
+export const searchResultsPerPage = 25;
 
-export function normalizeSearchTopK(value) {
+export function normalizeSearchPage(value) {
   const parsed = Number(value);
-  return searchTopKOptions.includes(parsed) ? parsed : defaultSearchTopK;
+  return parsed === 2 ? 2 : 1;
 }
 
 export function buildSearchResultsUrl({
   query,
-  topK,
+  page = 1,
   authorityFilter,
   pathname = "/search",
 }) {
   const params = new URLSearchParams({
     q: query.trim(),
-    top_k: String(topK),
+    page: String(normalizeSearchPage(page)),
   });
 
   if (authorityFilter) {
@@ -64,12 +64,10 @@ function SearchIcon() {
 
 function TopSearchBar({
   query,
-  topK,
   authorityFilter,
   isSearching,
   queryDurationMs,
   onQueryChange,
-  onTopKChange,
   onAuthorityFilterChange,
   onSubmit,
 }) {
@@ -112,28 +110,13 @@ function TopSearchBar({
       </div>
       <div className="mx-auto grid w-full max-w-7xl grid-cols-1 px-4 pb-3 sm:px-6 lg:grid-cols-[1fr_300px]">
         <div className="flex flex-wrap items-center gap-2">
-          {searchTopKOptions.map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => onTopKChange(option)}
-              className={`rounded-full border px-3 py-1 text-sm transition-colors active:scale-95 ${
-                topK === option
-                  ? "border-blue-400/70 bg-blue-500/25"
-                  : "border-white/20 bg-white/10 text-white/85 hover:bg-white/20"
-              }`}
-              aria-pressed={topK === option}
-            >
-              Top {option}
-            </button>
-          ))}
           <button
             type="button"
             onClick={() => onAuthorityFilterChange(!authorityFilter)}
             className={`rounded-full border px-3 py-1 text-sm transition-colors active:scale-95 ${
               authorityFilter
                 ? "border-emerald-300/70 bg-emerald-400/60"
-                : "border-white/20 bg-emerald-600/60 hover:bg-emerald-500/60 "
+                : "border-white/20 bg-emerald-700/30 hover:bg-emerald-500/60 "
             }`}
             aria-pressed={authorityFilter}
           >
@@ -142,6 +125,32 @@ function TopSearchBar({
         </div>
       </div>
     </header>
+  );
+}
+
+function PaginationControls({ currentPage, pageCount, onPageChange }) {
+  if (pageCount < 2) {
+    return null;
+  }
+
+  return (
+    <nav className="mb-4 flex flex-wrap items-center gap-2" aria-label="Search results pages">
+      {[1, 2].map((page) => (
+        <button
+          key={page}
+          type="button"
+          onClick={() => onPageChange(page)}
+          className={`rounded-full border px-3 py-1 text-sm transition-colors active:scale-95 ${
+            currentPage === page
+              ? "border-blue-400/70 bg-blue-500/25 text-white"
+              : "border-white/20 bg-white/10 text-white/85 hover:bg-white/20"
+          }`}
+          aria-current={currentPage === page ? "page" : undefined}
+        >
+          Page {page}
+        </button>
+      ))}
+    </nav>
   );
 }
 
@@ -205,7 +214,7 @@ function QueryDurationText({ durationMs }) {
   );
 }
 
-function KnowledgePanel({ query, count, topK, authorityFilter }) {
+function KnowledgePanel({ query, count, currentPage, authorityFilter }) {
   return (
     <aside className="rounded-2xl border border-white/15 bg-black/40 p-5">
       <h3 className={`${movieFont.className} text-3xl`}>
@@ -219,7 +228,8 @@ function KnowledgePanel({ query, count, topK, authorityFilter }) {
       <div className="mt-4 space-y-2 text-sm">
         <p className="text-white/90">Query: <span className="text-white">{query || "None"}</span></p>
         <p className="text-white/90">Matches found: <span className="text-white">{count}</span></p>
-        <p className="text-white/90">Requested count: <span className="text-white">Top {topK}</span></p>
+        <p className="text-white/90">Requested count: <span className="text-white">Top 50</span></p>
+        <p className="text-white/90">Page: <span className="text-white">{currentPage}</span></p>
         <p className="text-white/90">
           Authority filter: <span className="text-white">{authorityFilter ? "On" : "Off"}</span>
         </p>
@@ -230,13 +240,12 @@ function KnowledgePanel({ query, count, topK, authorityFilter }) {
 
 export default function SearchResultsView({
   initialQuery,
-  initialTopK,
+  initialPage = 1,
   initialAuthorityFilter,
   pathname = "/search",
 }) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
-  const [topK, setTopK] = useState(initialTopK);
   const [authorityFilter, setAuthorityFilter] = useState(initialAuthorityFilter);
   const [responseData, setResponseData] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
@@ -268,7 +277,7 @@ export default function SearchResultsView({
           },
           body: JSON.stringify({
             query: initialQuery.trim(),
-            top_k: initialTopK,
+            top_k: defaultSearchTopK,
             authority_filter: initialAuthorityFilter,
           }),
           signal: controller.signal,
@@ -301,10 +310,16 @@ export default function SearchResultsView({
     fetchResults();
 
     return () => controller.abort();
-  }, [initialAuthorityFilter, initialQuery, initialTopK]);
+  }, [initialAuthorityFilter, initialQuery]);
 
   const results = responseData?.results ?? [];
   const resultCount = typeof responseData?.count === "number" ? responseData.count : 0;
+  const pageCount = resultCount > searchResultsPerPage ? 2 : 1;
+  const currentPage = Math.min(normalizeSearchPage(initialPage), pageCount);
+  const visibleResults = results.slice(
+    (currentPage - 1) * searchResultsPerPage,
+    currentPage * searchResultsPerPage,
+  );
   const resultSummary = useMemo(() => {
     if (!initialQuery.trim()) {
       return "Enter a quote to search.";
@@ -315,8 +330,9 @@ export default function SearchResultsView({
     }
 
     const filterLabel = responseData?.authority_filter ? " with authority filter" : "";
-    return `${resultCount} result${resultCount === 1 ? "" : "s"}${filterLabel}`;
-  }, [initialQuery, isSearching, responseData?.authority_filter, resultCount]);
+    const pageLabel = resultCount > searchResultsPerPage ? `, page ${currentPage} of ${pageCount}` : "";
+    return `${resultCount} result${resultCount === 1 ? "" : "s"}${filterLabel}${pageLabel}`;
+  }, [currentPage, initialQuery, isSearching, pageCount, responseData?.authority_filter, resultCount]);
 
   function handleSubmit(event) {
     event.preventDefault();
@@ -325,19 +341,28 @@ export default function SearchResultsView({
       return;
     }
 
-    router.push(buildSearchResultsUrl({ query, topK, authorityFilter, pathname }));
+    router.push(buildSearchResultsUrl({ query, authorityFilter, pathname }));
+  }
+
+  function handlePageChange(page) {
+    router.push(
+      buildSearchResultsUrl({
+        query: initialQuery,
+        page,
+        authorityFilter: initialAuthorityFilter,
+        pathname,
+      }),
+    );
   }
 
   return (
     <main className="min-h-screen">
       <TopSearchBar
         query={query}
-        topK={topK}
         authorityFilter={authorityFilter}
         isSearching={isSearching}
         queryDurationMs={queryDurationMs}
         onQueryChange={setQuery}
-        onTopKChange={setTopK}
         onAuthorityFilterChange={setAuthorityFilter}
         onSubmit={handleSubmit}
       />
@@ -345,9 +370,14 @@ export default function SearchResultsView({
       <section className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[1fr_300px]">
         <div>
           <p className="mb-4 text-sm text-white/60">{resultSummary}</p>
+          <PaginationControls
+            currentPage={currentPage}
+            pageCount={pageCount}
+            onPageChange={handlePageChange}
+          />
           <div className="space-y-4">
-            {results.length ? (
-              results.map((result) => (
+            {visibleResults.length ? (
+              visibleResults.map((result) => (
                 <ResultCard key={result.passage_id} result={result} />
               ))
             ) : !isSearching && initialQuery.trim() ? (
@@ -359,7 +389,7 @@ export default function SearchResultsView({
           <KnowledgePanel
             query={initialQuery}
             count={resultCount}
-            topK={initialTopK}
+            currentPage={currentPage}
             authorityFilter={initialAuthorityFilter}
           />
         </div>

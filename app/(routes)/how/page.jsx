@@ -3,8 +3,8 @@
  * Simplified implementation for the QueryQuote "How it Works" page.
  * The page is now driven by a few compact data structures and one shared section
  * renderer so the route stays easy to scan and update without repeated card markup.
- * Last updated: 2026-04-25 - Added route-level scroll snapping so the intro and
- * each major content panel settle into place during vertical scrolling.
+ * Last updated: 2026-04-26 - Updated the request-flow copy to reflect fixed
+ * Top 50 searches with paginated frontend results.
  */
 import { Jersey_10 } from "next/font/google";
 import RouteBackLink from "../_components/RouteBackLink";
@@ -99,7 +99,7 @@ const sections = [
     title: "Request Flow",
     columns: "md:grid-cols-4",
     items: [
-      { body: "The user types a quote into /search and selects a top-k result count." },
+      { body: "The user types a quote into /search; the UI requests Top 50 results and paginates them into two pages." },
       { body: "The browser sends the request to /api/search inside the Next.js app." },
       { body: "The Next.js route forwards the request to the Flask backend at /api/search." },
       { body: "Flask runs the search engine and returns ranked passages back to the UI." },

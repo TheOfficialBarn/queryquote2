@@ -3,8 +3,8 @@
 /**
  * Prologue:
  * Search route UI for quote discovery with a search-first experience and quick filters.
- * Last updated: 2026-04-26 - Uses the shared Top 25 default for new searches
- * and result URL normalization.
+ * Last updated: 2026-04-26 - Removed Top K selection so searches always load
+ * Top 50 results with page state handled in the results view.
  */
 import { Suspense, useState } from "react";
 import { Jersey_10 } from "next/font/google";
@@ -12,9 +12,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import SearchResultsView, {
   buildSearchResultsUrl,
-  defaultSearchTopK,
-  normalizeSearchTopK,
-  searchTopKOptions,
+  normalizeSearchPage,
 } from "../_components/SearchResultsView";
 
 const movieFont = Jersey_10({
@@ -28,28 +26,6 @@ const tickerQuotes = [
   '"I drink your milkshake!"',
   '"Roads? Where we\'re going, we don\'t need roads."',
 ];
-
-function TopKChips({ selectedTopK, onChange }) {
-  return (
-    <div className="mt-5 flex flex-wrap justify-center gap-2">
-      {searchTopKOptions.map((option) => (
-        <button
-          key={option}
-          type="button"
-          onClick={() => onChange(option)}
-          className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
-            selectedTopK === option
-              ? "border-white/60 bg-white/25 text-white"
-              : "border-white/20 bg-white/10 text-white/90 hover:bg-white/20"
-          }`}
-          aria-pressed={selectedTopK === option}
-        >
-          Top {option}
-        </button>
-      ))}
-    </div>
-  );
-}
 
 function AuthorityFilterToggle({ enabled, onChange }) {
   return (
@@ -74,7 +50,6 @@ function AuthorityFilterToggle({ enabled, onChange }) {
 function SearchLandingPage() {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const [topK, setTopK] = useState(defaultSearchTopK);
   const [useAuthorityFilter, setUseAuthorityFilter] = useState(false);
 
   async function handleSearch(event) {
@@ -88,7 +63,6 @@ function SearchLandingPage() {
     router.push(
       buildSearchResultsUrl({
         query: trimmedQuery,
-        topK,
         authorityFilter: useAuthorityFilter,
       }),
     );
@@ -156,7 +130,6 @@ function SearchLandingPage() {
               Search
             </button>
           </div>
-          <TopKChips selectedTopK={topK} onChange={setTopK} />
           <div className="flex justify-center">
             <AuthorityFilterToggle
               enabled={useAuthorityFilter}
@@ -174,16 +147,16 @@ function SearchLandingPage() {
 function SearchPageContent() {
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get("q") || "";
-  const initialTopK = normalizeSearchTopK(searchParams.get("top_k"));
+  const initialPage = normalizeSearchPage(searchParams.get("page"));
   const initialAuthorityFilter = searchParams.get("authority_filter") === "true";
-  const pageStateKey = `${initialQuery}-${initialTopK}-${initialAuthorityFilter}`;
+  const pageStateKey = `${initialQuery}-${initialAuthorityFilter}`;
 
   if (initialQuery.trim()) {
     return (
       <SearchResultsView
         key={pageStateKey}
         initialQuery={initialQuery}
-        initialTopK={initialTopK}
+        initialPage={initialPage}
         initialAuthorityFilter={initialAuthorityFilter}
       />
     );

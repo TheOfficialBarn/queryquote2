@@ -1,11 +1,12 @@
 """Prologue:
 SQLite-backed indexing and search for large QueryQuote transcript corpora.
-Last updated: 2026-04-26 - Uses the shared Top 25 default when callers omit
-an explicit search result count.
+Last updated: 2026-04-26 - Adds Authority Boost state to each appended
+backend/time.txt query timing block for clearer performance comparisons.
 """
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 import heapq
 import json
 import math
@@ -21,6 +22,53 @@ from .preprocessing import tokenize
 from .quote_matching import fuzzy_ratio
 from .ranking import minmax_normalize
 from .types import SearchResult
+
+
+DEFAULT_TIMING_LOG_PATH = Path(__file__).resolve().parents[2] / "time.txt"
+
+
+@dataclass(slots=True)
+class _QueryTimingLog:
+    query: str
+    authority_filter: bool = False
+    log_path: Path = DEFAULT_TIMING_LOG_PATH
+    metrics: list[tuple[str, float]] = field(default_factory=list)
+
+    def record(self, label: str, started_at: float) -> None:
+        self.metrics.append((label, time.perf_counter() - started_at))
+
+    def append(self, total_seconds: float) -> None:
+        authority_label = "On" if self.authority_filter else "Off"
+        lines = [f'Query: "{self.query}" | Authority Boost: {authority_label}']
+        lines.extend(
+            f"{label}: {duration:.6f}s"
+            for index, (label, duration) in enumerate(self.metrics, start=1)
+        )
+        lines.extend(
+            [
+                "---",
+                f"Total Time: {total_seconds:.6f}s",
+                "_________________________",
+            ]
+        )
+
+        try:
+            self.log_path.parent.mkdir(parents=True, exist_ok=True)
+            with self.log_path.open("a", encoding="utf-8") as handle:
+                handle.write("\n".join(lines))
+                handle.write("\n")
+        except OSError:
+            # Search should keep working even if timing diagnostics cannot be written.
+            return
+
+
+def _record_timing(
+    timing: _QueryTimingLog | None,
+    label: str,
+    started_at: float,
+) -> None:
+    if timing is not None:
+        timing.record(label, started_at)
 
 
 def _connect(db_path: str | Path) -> sqlite3.Connection:
@@ -289,17 +337,26 @@ class SQLiteSearchEngine:
         authority_filter: bool = False,
     ) -> list[SearchResult]:
         """Search query using a thread-local database connection."""
-        # Create a new connection for this search (thread-safe)
-        conn = _connect(self.db_path)
+        total_started_at = time.perf_counter()
+        timing = _QueryTimingLog(query=query, authority_filter=authority_filter)
+        conn: sqlite3.Connection | None = None
         try:
+            started_at = time.perf_counter()
+            conn = _connect(self.db_path)
+            timing.record("Open SQLite connection", started_at)
             return self._search_with_conn(
                 conn,
                 query,
                 top_k=top_k,
                 authority_filter=authority_filter,
+                timing=timing,
             )
         finally:
-            conn.close()
+            if conn is not None:
+                started_at = time.perf_counter()
+                conn.close()
+                timing.record("Close SQLite connection", started_at)
+            timing.append(time.perf_counter() - total_started_at)
 
     def _search_with_conn(
         self,
@@ -308,18 +365,28 @@ class SQLiteSearchEngine:
         *,
         top_k: int = DEFAULT_TOP_K,
         authority_filter: bool = False,
+        timing: _QueryTimingLog | None = None,
     ) -> list[SearchResult]:
+        started_at = time.perf_counter()
         query_terms = tokenize(query, remove_stopwords=True)
-        if not query_terms or self.num_docs == 0:
+        _record_timing(timing, "Tokenize query", started_at)
+
+        started_at = time.perf_counter()
+        has_searchable_query = bool(query_terms) and self.num_docs > 0
+        _record_timing(timing, "Validate query and index metadata", started_at)
+        if not has_searchable_query:
             return []
 
+        started_at = time.perf_counter()
         bm25_scores: dict[str, float] = defaultdict(float)
         qtf = Counter(query_terms)
+        _record_timing(timing, "Prepare BM25 query weights", started_at)
 
         # Limit postings per term to avoid processing millions of documents
         # This makes search responsive even on huge indices
-        MAX_POSTINGS_PER_TERM = 10000
+        MAX_POSTINGS_PER_TERM = 40000
 
+        started_at = time.perf_counter()
         for term, q_weight in qtf.items():
             row = conn.execute(
                 "SELECT df FROM term_stats WHERE term = ?",
@@ -345,22 +412,33 @@ class SQLiteSearchEngine:
                 dl = int(dl)
                 denom = tf + 1.5 * (1 - 0.75 + 0.75 * (dl / (self.avg_doc_len or 1.0)))
                 bm25_scores[doc_id] += idf * ((tf * (1.5 + 1)) / (denom or 1e-9)) * q_weight
+        _record_timing(timing, "Fetch postings and compute BM25 scores", started_at)
 
-        if not bm25_scores:
+        started_at = time.perf_counter()
+        has_bm25_scores = bool(bm25_scores)
+        _record_timing(timing, "Validate BM25 candidate scores", started_at)
+        if not has_bm25_scores:
             return []
 
         # Use heapq for efficient top-k selection instead of sorting all docs
         # ADJUSTED @ 11:31AM APRIL 26TH FOR SPEED
 
-        top_k_docs = heapq.nlargest(75, bm25_scores.items(), key=lambda x: x[1])
+        started_at = time.perf_counter()
+        top_k_docs = heapq.nlargest(200, bm25_scores.items(), key=lambda x: x[1])
         rerank_ids = [doc_id for doc_id, _ in top_k_docs]
-        
+        _record_timing(timing, "Select rerank candidates", started_at)
+
+        started_at = time.perf_counter()
         # Normalize scores for reranking
         base_scores = dict(minmax_normalize(dict(bm25_scores)))
+        _record_timing(timing, "Normalize BM25 scores", started_at)
         if rerank_ids:
+            started_at = time.perf_counter()
             ph = ",".join("?" for _ in rerank_ids)
             pt = ",".join("?" for _ in query_terms)
+            _record_timing(timing, "Build rerank SQL placeholders", started_at)
 
+            started_at = time.perf_counter()
             positions_map: dict[str, dict[str, list[int]]] = defaultdict(dict)
             rows = conn.execute(
                 f"""
@@ -373,7 +451,9 @@ class SQLiteSearchEngine:
 
             for term, doc_id, positions_json in rows:
                 positions_map[doc_id][term] = json.loads(positions_json)
+            _record_timing(timing, "Fetch and decode rerank term positions", started_at)
 
+            started_at = time.perf_counter()
             passage_rows = conn.execute(
                 f"""
                 SELECT passage_id, movie_id, source_file, raw_text
@@ -384,7 +464,9 @@ class SQLiteSearchEngine:
             ).fetchall()
 
             passage_map = {row[0]: row for row in passage_rows}
+            _record_timing(timing, "Fetch rerank passages", started_at)
 
+            started_at = time.perf_counter()
             for doc_id in rerank_ids:
                 info = passage_map.get(doc_id)
                 if info is None:
@@ -395,18 +477,24 @@ class SQLiteSearchEngine:
                 prox = _proximity_score_from_positions(query_terms, pos)
                 fuzz = fuzzy_ratio(query, raw_text)
                 base_scores[doc_id] += 0.25 * phrase + 0.20 * prox + 0.20 * fuzz
+            _record_timing(timing, "Apply quote-aware rerank scoring", started_at)
 
+        started_at = time.perf_counter()
         if authority_filter:
             for doc_id, score in list(base_scores.items()):
                 movie_id = _movie_id_from_passage_id(doc_id)
                 multiplier = self.authority_index.multiplier_for_movie_id(movie_id)
                 if multiplier is not None:
                     base_scores[doc_id] = score * multiplier
+        _record_timing(timing, "Apply authority filter", started_at)
 
+        started_at = time.perf_counter()
         ranked = sorted(base_scores.items(), key=lambda x: x[1], reverse=True)[:top_k]
+        _record_timing(timing, "Sort final scores", started_at)
         if not ranked:
             return []
 
+        started_at = time.perf_counter()
         rid = [doc_id for doc_id, _ in ranked]
         ph = ",".join("?" for _ in rid)
         rows = conn.execute(
@@ -418,7 +506,9 @@ class SQLiteSearchEngine:
             tuple(rid),
         ).fetchall()
         info = {row[0]: row for row in rows}
+        _record_timing(timing, "Fetch final result passages", started_at)
 
+        started_at = time.perf_counter()
         results: list[SearchResult] = []
         for doc_id, score in ranked:
             row = info.get(doc_id)
@@ -436,4 +526,5 @@ class SQLiteSearchEngine:
                 )
             )
 
+        _record_timing(timing, "Build SearchResult objects", started_at)
         return results

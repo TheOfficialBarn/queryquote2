@@ -54,13 +54,13 @@ queryquote build --data-dir movie-transcripts-59k/transcripts --output-dir data/
 Run search:
 
 ```bash
-queryquote search --index-dir data/index --query "you can't handle the truth" --top-k 10
+queryquote search --index-dir data/index --query "you can't handle the truth" --top-k 50
 ```
 
 Run evaluation with starter files:
 
 ```bash
-queryquote evaluate --index-dir data/index --queries examples/queries.jsonl --qrels examples/qrels.jsonl --top-k 10
+queryquote evaluate --index-dir data/index --queries examples/queries.jsonl --qrels examples/qrels.jsonl --top-k 50
 ```
 
 ## Notes
@@ -94,17 +94,17 @@ queryquote build --backend sqlite --data-dir movie-transcripts-59k/transcripts -
 Search using sqlite backend:
 
 ```bash
-queryquote search --backend sqlite --index-dir data/index --query "you can't handle the truth" --top-k 10
+queryquote search --backend sqlite --index-dir data/index --query "you can't handle the truth" --top-k 50
 ```
 
 Enable optional authority reranking with Metacritic vote counts:
 
 ```bash
-queryquote search --backend sqlite --index-dir data/index --query "you can't handle the truth" --top-k 10 --authority-filter
+queryquote search --backend sqlite --index-dir data/index --query "you can't handle the truth" --top-k 50 --authority-filter
 ```
 
 Evaluate using sqlite backend:
 
 ```bash
-queryquote evaluate --backend sqlite --index-dir data/index --queries examples/queries.jsonl --qrels examples/qrels.jsonl --top-k 10
+queryquote evaluate --backend sqlite --index-dir data/index --queries examples/queries.jsonl --qrels examples/qrels.jsonl --top-k 50
 ```
