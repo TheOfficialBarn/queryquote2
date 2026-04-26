@@ -3,8 +3,8 @@
  * Simplified implementation for the QueryQuote "How it Works" page.
  * The page is now driven by a few compact data structures and one shared section
  * renderer so the route stays easy to scan and update without repeated card markup.
- * Last updated: 2026-04-25 - Reduced page complexity by removing one-off helper
- * components and consolidating repeated section/card rendering into a single pattern.
+ * Last updated: 2026-04-25 - Added route-level scroll snapping so the intro and
+ * each major content panel settle into place during vertical scrolling.
  */
 import { Jersey_10 } from "next/font/google";
 import Link from "next/link";
@@ -177,7 +177,7 @@ function renderCard(item, index) {
 
 export default function HowPage() {
   return (
-    <main className="min-h-screen px-6 py-8 md:px-8 md:py-10">
+    <main className="h-screen snap-y snap-mandatory overflow-y-auto px-6 py-8 md:px-8 md:py-10">
       <div className="mx-auto max-w-6xl">
         <nav className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5 text-sm text-white/75">
           <div className="flex flex-wrap items-center gap-4">
@@ -192,7 +192,7 @@ export default function HowPage() {
           </a>
         </nav>
 
-        <div className="mt-10 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="mt-10 grid min-h-[calc(100vh-8rem)] snap-end items-start gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           <header className="max-w-3xl">
             <p className="text-xs uppercase tracking-[0.3em] text-white/55">Inside QueryQuote</p>
             <h1 className={`${movieFont.className} mt-3 text-4xl tracking-wide text-white md:text-6xl`}>
@@ -223,7 +223,7 @@ export default function HowPage() {
           {sections.map((section) => (
             <section
               key={section.title}
-              className="rounded-3xl border border-white/12 bg-black/35 p-6 md:p-8"
+              className="min-h-[calc(100vh-8rem)] snap-center rounded-3xl border border-white/12 bg-black/35 p-6 md:p-8"
             >
               <h2 className="text-xl font-semibold text-white/95">{section.title}</h2>
               <div className={`mt-5 grid gap-4 ${section.columns}`}>
