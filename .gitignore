@@ -43,3 +43,5 @@ next-env.d.ts
 # large local datasets and generated backend artifacts
 /backend/data/
 /backend/movie-transcripts-59k/
+/backend/movies.json
+backend/subtitles-dataset/
