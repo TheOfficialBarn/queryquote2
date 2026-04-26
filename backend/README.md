@@ -97,6 +97,12 @@ Search using sqlite backend:
 queryquote search --backend sqlite --index-dir data/index --query "you can't handle the truth" --top-k 10
 ```
 
+Enable optional authority reranking with Metacritic vote counts:
+
+```bash
+queryquote search --backend sqlite --index-dir data/index --query "you can't handle the truth" --top-k 10 --authority-filter
+```
+
 Evaluate using sqlite backend:
 
 ```bash

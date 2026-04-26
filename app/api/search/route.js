@@ -1,7 +1,8 @@
 /**
  * Prologue:
  * Server-side proxy route for quote search requests from the Next.js frontend.
- * Last updated: 2026-04-25 - Added Flask API proxy to keep backend URL/server details out of client code and avoid browser CORS issues.
+ * Last updated: 2026-04-25 - Added opt-in authority filter passthrough so the
+ * backend can weight rankings by Metacritic vote counts only when requested.
  */
 import { NextResponse } from "next/server";
 
@@ -16,6 +17,7 @@ export async function POST(request) {
     const body = await request.json();
     const query = typeof body?.query === "string" ? body.query.trim() : "";
     const topK = Number.isInteger(body?.top_k) ? body.top_k : 10;
+    const authorityFilter = body?.authority_filter === true;
 
     if (!query) {
       return NextResponse.json(
@@ -29,7 +31,11 @@ export async function POST(request) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ query, top_k: topK }),
+      body: JSON.stringify({
+        query,
+        top_k: topK,
+        authority_filter: authorityFilter,
+      }),
       cache: "no-store",
     });
 

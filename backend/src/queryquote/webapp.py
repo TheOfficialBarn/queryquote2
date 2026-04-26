@@ -1,7 +1,7 @@
 """Prologue:
 API-only Flask application for QueryQuote search endpoints.
-Last updated: Removed server-rendered frontend (templates/static) so this module
-exposes backend endpoints only, ready for external frontend clients.
+Last updated: 2026-04-25 - Added an opt-in authority filter request flag that
+lets clients rerank results with Metacritic vote-count weighting.
 """
 
 from __future__ import annotations
@@ -59,7 +59,8 @@ def create_app(index_dir: str, backend: str = "sqlite") -> Flask:
         Request JSON:
             {
                 "query": "search query",
-                "top_k": 10  (optional, default 10)
+                "top_k": 10,  (optional, default 10)
+                "authority_filter": false  (optional, default false)
             }
 
         Returns:
@@ -76,6 +77,7 @@ def create_app(index_dir: str, backend: str = "sqlite") -> Flask:
                     ...
                 ],
                 "query": "search query",
+                "authority_filter": false,
                 "count": 5
             }
         """
@@ -83,17 +85,23 @@ def create_app(index_dir: str, backend: str = "sqlite") -> Flask:
             data = request.get_json() or {}
             query = data.get("query", "").strip()
             top_k = data.get("top_k", DEFAULT_TOP_K)
+            authority_filter = data.get("authority_filter") is True
 
             if not query:
                 return jsonify(
                     {"error": "Query is required", "results": [], "count": 0}
                 ), 400
 
-            results = search_engine.search(query, top_k=top_k)
+            results = search_engine.search(
+                query,
+                top_k=top_k,
+                authority_filter=authority_filter,
+            )
 
             return jsonify(
                 {
                     "query": query,
+                    "authority_filter": authority_filter,
                     "results": [
                         {
                             "passage_id": r.passage_id,

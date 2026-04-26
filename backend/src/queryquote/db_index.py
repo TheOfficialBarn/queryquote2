@@ -1,3 +1,9 @@
+"""Prologue:
+SQLite-backed indexing and search for large QueryQuote transcript corpora.
+Last updated: 2026-04-25 - Added opt-in authority filtering to rerank SQLite
+search results with Metacritic vote-count multipliers when requested.
+"""
+
 from __future__ import annotations
 
 import heapq
@@ -8,6 +14,7 @@ import time
 from collections import Counter, defaultdict
 from pathlib import Path
 
+from .authority import AuthorityIndex, load_default_authority_index
 from .passages import iter_transcript_files, movie_id_from_filename, split_text_into_passages
 from .preprocessing import tokenize
 from .quote_matching import fuzzy_ratio
@@ -243,9 +250,21 @@ def _proximity_score_from_positions(
     return window / best
 
 
+def _movie_id_from_passage_id(passage_id: str) -> str:
+    return passage_id.rsplit("::", 1)[0]
+
+
 class SQLiteSearchEngine:
-    def __init__(self, db_path: str | Path) -> None:
+    def __init__(
+        self,
+        db_path: str | Path,
+        *,
+        authority_index: AuthorityIndex | None = None,
+    ) -> None:
         self.db_path = Path(db_path)
+        self.authority_index = (
+            authority_index if authority_index is not None else load_default_authority_index()
+        )
         # Load metadata once, don't store connection (will create per query)
         temp_conn = _connect(self.db_path)
         self.num_docs = int(self._meta_from_conn(temp_conn, "num_docs", "0"))
@@ -261,16 +280,34 @@ class SQLiteSearchEngine:
         row = conn.execute("SELECT value FROM meta WHERE key = ?", (key,)).fetchone()
         return row[0] if row else default
 
-    def search(self, query: str, *, top_k: int = 10) -> list[SearchResult]:
+    def search(
+        self,
+        query: str,
+        *,
+        top_k: int = 10,
+        authority_filter: bool = False,
+    ) -> list[SearchResult]:
         """Search query using a thread-local database connection."""
         # Create a new connection for this search (thread-safe)
         conn = _connect(self.db_path)
         try:
-            return self._search_with_conn(conn, query, top_k=top_k)
+            return self._search_with_conn(
+                conn,
+                query,
+                top_k=top_k,
+                authority_filter=authority_filter,
+            )
         finally:
             conn.close()
 
-    def _search_with_conn(self, conn: sqlite3.Connection, query: str, *, top_k: int = 10) -> list[SearchResult]:
+    def _search_with_conn(
+        self,
+        conn: sqlite3.Connection,
+        query: str,
+        *,
+        top_k: int = 10,
+        authority_filter: bool = False,
+    ) -> list[SearchResult]:
         query_terms = tokenize(query, remove_stopwords=True)
         if not query_terms or self.num_docs == 0:
             return []
@@ -355,6 +392,13 @@ class SQLiteSearchEngine:
                 prox = _proximity_score_from_positions(query_terms, pos)
                 fuzz = fuzzy_ratio(query, raw_text)
                 base_scores[doc_id] += 0.25 * phrase + 0.20 * prox + 0.20 * fuzz
+
+        if authority_filter:
+            for doc_id, score in list(base_scores.items()):
+                movie_id = _movie_id_from_passage_id(doc_id)
+                multiplier = self.authority_index.multiplier_for_movie_id(movie_id)
+                if multiplier is not None:
+                    base_scores[doc_id] = score * multiplier
 
         ranked = sorted(base_scores.items(), key=lambda x: x[1], reverse=True)[:top_k]
         if not ranked:

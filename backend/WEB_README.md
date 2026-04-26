@@ -35,9 +35,14 @@ Default server address: `http://127.0.0.1:5000`
 ```json
 {
   "query": "your search query",
-  "top_k": 10
+  "top_k": 10,
+  "authority_filter": false
 }
 ```
+
+`authority_filter` is optional and defaults to `false`. When set to `true`,
+ranked movies found in `authority.csv` are adjusted by Metacritic vote count:
+sparse-vote movies are lowered and high-vote movies are boosted.
 
 ### Search Response
 

@@ -1,7 +1,14 @@
+"""Prologue:
+In-memory quote search engine that combines lexical ranking and quote-aware reranking.
+Last updated: 2026-04-25 - Added opt-in authority filtering so Metacritic
+vote counts can adjust ranking only when callers request it.
+"""
+
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
+from .authority import AuthorityIndex, load_default_authority_index
 from .config import ScoreWeights
 from .indexing import IndexBundle, load_index
 from .preprocessing import tokenize
@@ -14,6 +21,7 @@ from .types import SearchResult
 class SearchEngine:
     bundle: IndexBundle
     weights: ScoreWeights = ScoreWeights()
+    authority_index: AuthorityIndex = field(default_factory=load_default_authority_index)
 
     @classmethod
     def from_index_dir(cls, index_dir: str) -> "SearchEngine":
@@ -25,7 +33,13 @@ class SearchEngine:
             candidates.update(self.bundle.index.postings.get(term, {}).keys())
         return candidates
 
-    def search(self, query: str, *, top_k: int = 10) -> list[SearchResult]:
+    def search(
+        self,
+        query: str,
+        *,
+        top_k: int = 10,
+        authority_filter: bool = False,
+    ) -> list[SearchResult]:
         query_terms = tokenize(query, remove_stopwords=True)
         if not query_terms:
             return []
@@ -65,6 +79,15 @@ class SearchEngine:
                 + self.weights.proximity_boost * prox
                 + self.weights.fuzzy_boost * fuzz
             )
+
+        if authority_filter:
+            for doc_id, score in list(final_scores.items()):
+                passage = passages_by_id.get(doc_id)
+                if passage is None:
+                    continue
+                multiplier = self.authority_index.multiplier_for_movie_id(passage.movie_id)
+                if multiplier is not None:
+                    final_scores[doc_id] = score * multiplier
 
         ranked = sorted(final_scores.items(), key=lambda x: x[1], reverse=True)[:top_k]
         results: list[SearchResult] = []

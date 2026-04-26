@@ -1,3 +1,9 @@
+"""Prologue:
+Command-line entry points for building, searching, and evaluating QueryQuote indexes.
+Last updated: 2026-04-25 - Added an opt-in authority filter flag for CLI
+search and evaluation runs without changing default ranking behavior.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -43,7 +49,11 @@ def cmd_search(args: argparse.Namespace) -> None:
     else:
         engine = SearchEngine.from_index_dir(args.index_dir)
 
-    results = engine.search(args.query, top_k=args.top_k)
+    results = engine.search(
+        args.query,
+        top_k=args.top_k,
+        authority_filter=args.authority_filter,
+    )
     if not results:
         print("No results found.")
         return
@@ -67,7 +77,7 @@ def cmd_evaluate(args: argparse.Namespace) -> None:
     for row in queries:
         qid = row["qid"]
         q = row["query"]
-        results = engine.search(q, top_k=args.top_k)
+        results = engine.search(q, top_k=args.top_k, authority_filter=args.authority_filter)
         run[qid] = [r.passage_id for r in results]
 
     metrics = evaluate_run(run, qrels, k=args.top_k)
@@ -117,6 +127,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_search.add_argument("--query", required=True)
     p_search.add_argument("--top-k", type=int, default=DEFAULT_TOP_K)
+    p_search.add_argument(
+        "--authority-filter",
+        action="store_true",
+        help="Rerank matched movies by Metacritic vote-count authority",
+    )
     p_search.set_defaults(func=cmd_search)
 
     p_eval = sub.add_parser("evaluate", help="Evaluate run against qrels")
@@ -130,6 +145,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_eval.add_argument("--queries", required=True, help="JSONL with qid/query")
     p_eval.add_argument("--qrels", required=True, help="JSONL with qid/doc_id/relevance")
     p_eval.add_argument("--top-k", type=int, default=DEFAULT_TOP_K)
+    p_eval.add_argument(
+        "--authority-filter",
+        action="store_true",
+        help="Rerank matched movies by Metacritic vote-count authority",
+    )
     p_eval.set_defaults(func=cmd_evaluate)
 
     return parser

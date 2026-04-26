@@ -3,7 +3,8 @@
 /**
  * Prologue:
  * Search route UI for quote discovery with a search-first experience and quick filters.
- * Last updated: 2026-04-25 - Wired the page to Flask via Next.js API proxy, including request state, top-k controls, and result/error rendering.
+ * Last updated: 2026-04-25 - Added an opt-in authority filter toggle that
+ * sends Metacritic vote-count weighting only when selected by the user.
  */
 import { useMemo, useState } from "react";
 import { Jersey_10 } from "next/font/google";
@@ -41,6 +42,26 @@ function TopKChips({ selectedTopK, onChange }) {
         </button>
       ))}
     </div>
+  );
+}
+
+function AuthorityFilterToggle({ enabled, onChange }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!enabled)}
+      className={`mt-4 rounded-2xl border px-4 py-3 text-left transition-colors ${
+        enabled
+          ? "border-emerald-300/60 bg-emerald-300/15 text-white"
+          : "border-white/15 bg-white/5 text-white/85 hover:bg-white/10"
+      }`}
+      aria-pressed={enabled}
+    >
+      <span className="block text-sm font-semibold">Authority filter</span>
+      <span className="mt-1 block text-xs text-white/70">
+        Boost movies with more Metacritic votes and lower sparse-review matches.
+      </span>
+    </button>
   );
 }
 
@@ -85,12 +106,14 @@ export default function SearchPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [useAuthorityFilter, setUseAuthorityFilter] = useState(false);
 
   const resultCountLabel = useMemo(() => {
     if (!responseData || typeof responseData.count !== "number") {
       return "";
     }
-    return `${responseData.count} result${responseData.count === 1 ? "" : "s"}`;
+    const filterLabel = responseData.authority_filter ? " with authority filter" : "";
+    return `${responseData.count} result${responseData.count === 1 ? "" : "s"}${filterLabel}`;
   }, [responseData]);
 
   async function handleSearch(event) {
@@ -110,7 +133,11 @@ export default function SearchPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ query: trimmedQuery, top_k: topK }),
+        body: JSON.stringify({
+          query: trimmedQuery,
+          top_k: topK,
+          authority_filter: useAuthorityFilter,
+        }),
       });
 
       const data = await response.json();
@@ -193,6 +220,12 @@ export default function SearchPage() {
             </button>
           </div>
           <TopKChips selectedTopK={topK} onChange={setTopK} />
+          <div className="flex justify-center">
+            <AuthorityFilterToggle
+              enabled={useAuthorityFilter}
+              onChange={setUseAuthorityFilter}
+            />
+          </div>
         </form>
 
         {errorMessage ? (
