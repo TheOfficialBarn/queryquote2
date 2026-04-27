@@ -11,7 +11,8 @@ JSONL loading, and qrel grouping dependencies.
 
 from __future__ import annotations      # Keeps metric helper type hints lazy at runtime.
 import json                             # Parses query and qrel JSONL rows.
-import math                             # Computes logarithmic DCG gains for nDCG. (Discounted Cumulative Gain) "How useful was this reslut to user"
+import math                             # Computes logarithmic DCG gains for nDCG. (Discounted Cumulative Gain) 
+                                        # "How useful was this reslut to user"
 from collections import defaultdict     # Groups qrel relevance judgments by query ID.
 from pathlib import Path                # Accepts string or Path inputs for evaluation files.
 
