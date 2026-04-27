@@ -1,7 +1,12 @@
-"""Prologue:
+"""
+Authors: Aiden Barnard & Atharva Patil
+Class: EECS 767 IR (Class Project)
+
+Prologue:
 Command-line entry points for building, searching, and evaluating QueryQuote indexes.
-Last updated: 2026-04-27 - Removed the deprecated pickle backend; CLI now
-targets SQLite v1 and SQLite v2 indexes only.
+
+Last updated: 2026-04-27 - Added short review comments explaining the CLI
+command handlers, backend selection, and parser setup.
 """
 
 from __future__ import annotations
@@ -16,6 +21,8 @@ from .evaluation import evaluate_run, load_qrels, load_queries
 
 
 def cmd_build(args: argparse.Namespace) -> None:
+    # Builds the v1 SQLite postings database used by Legacy Search.
+    # Full-corpus builds can take many hours; keep the machine awake while running.
     db_path = build_sqlite_index(
         data_dir=args.data_dir,
         output_dir=args.output_dir,
@@ -27,6 +34,8 @@ def cmd_build(args: argparse.Namespace) -> None:
 
 
 def cmd_build_v2(args: argparse.Namespace) -> None:
+    # Builds a v2 SQLite postings database for all, intersection, or rest corpus modes.
+    # Split-corpus builds are official, and full/rest builds can take many hours.
     db_path = build_sqlite_index_v2(
         data_dir=args.data_dir,
         output_dir=args.output_dir,
@@ -41,6 +50,7 @@ def cmd_build_v2(args: argparse.Namespace) -> None:
 
 
 def cmd_search(args: argparse.Namespace) -> None:
+    # Load the requested SQLite engine, run one query, and print ranked passages.
     engine = _load_search_engine(args)
 
     results = engine.search(
@@ -59,6 +69,7 @@ def cmd_search(args: argparse.Namespace) -> None:
 
 
 def cmd_evaluate(args: argparse.Namespace) -> None:
+    # Replay a query set through one engine, then score the run against qrels.
     engine = _load_search_engine(args)
 
     queries = load_queries(args.queries)
@@ -76,21 +87,27 @@ def cmd_evaluate(args: argparse.Namespace) -> None:
 
 
 def _load_search_engine(args: argparse.Namespace):
+    # Centralize v1/v2 selection so search and evaluation use the same routing.
     backend = args.backend
     index_version = getattr(args, "index_version", "v1")
 
+    # Explicit sqlite-v2, or generic sqlite with --index-version v2, loads v2.
     if backend == "sqlite-v2" or (backend in {"sqlite", "sqlite-v1"} and index_version == "v2"):
         v2_index_dir = getattr(args, "v2_index_dir", None) or args.index_dir
         return SQLiteSearchEngineV2.from_index_dir(v2_index_dir)
+
+    # sqlite and sqlite-v1 both mean the original SQLite v1 index.
     if backend in {"sqlite", "sqlite-v1"}:
         return SQLiteSearchEngine.from_index_dir(args.index_dir)
     raise ValueError(f"Unsupported backend: {backend}")
 
 
 def build_parser() -> argparse.ArgumentParser:
+    # argparse owns the command surface for the installed `queryquote` CLI.
     parser = argparse.ArgumentParser(description="QueryQuote IR system")
     sub = parser.add_subparsers(dest="command", required=True)
 
+    # v1 index builder: writes the original SQLite postings index.
     p_build = sub.add_parser("build", help="Build passage index from transcripts")
     p_build.add_argument("--data-dir", required=True, help="Path to transcript .txt files")
     p_build.add_argument("--output-dir", required=True, help="Where to save index")
@@ -120,6 +137,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_build.set_defaults(func=cmd_build)
 
+    # v2 index builder: writes the newer SQLite schema and supports corpus splits.
     p_build_v2 = sub.add_parser(
         "build-v2",
         help="Build separate v2 SQLite postings from transcripts",
@@ -167,6 +185,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_build_v2.set_defaults(func=cmd_build_v2)
 
+    # Search command: runs one quote query and prints the top ranked passages.
     p_search = sub.add_parser("search", help="Search by quote text")
     p_search.add_argument("--index-dir", required=True)
     p_search.add_argument(
@@ -195,6 +214,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_search.set_defaults(func=cmd_search)
 
+    # Evaluation command: computes IR metrics from query and qrel JSONL files.
     p_eval = sub.add_parser("evaluate", help="Evaluate run against qrels")
     p_eval.add_argument("--index-dir", required=True)
     p_eval.add_argument(
@@ -228,6 +248,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    # Dispatch to the handler attached by the selected subcommand.
     parser = build_parser()
     args = parser.parse_args()
     args.func(args)
