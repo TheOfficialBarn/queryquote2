@@ -1,7 +1,7 @@
 """Prologue:
 API-only Flask application for QueryQuote search endpoints.
-Last updated: 2026-04-26 - Documents the shared Top 50 default for omitted
-search result counts.
+Last updated: 2026-04-27 - Added explicit v1/v2 SQLite index selection so
+one backend can compare legacy and v2 search results.
 """
 
 from __future__ import annotations
@@ -13,27 +13,48 @@ from flask import Flask, jsonify, request
 
 from .config import DEFAULT_TOP_K
 from .db_index import SQLiteSearchEngine
+from .db_index_v2 import SQLiteSearchEngineV2
 from .search_engine import SearchEngine
 
 
-def create_app(index_dir: str, backend: str = "sqlite") -> Flask:
+def create_app(
+    index_dir: str,
+    backend: str = "sqlite",
+    *,
+    v2_index_dir: str | None = None,
+    default_index_version: str = "v1",
+) -> Flask:
     """Create and configure the Flask application.
 
     Args:
         index_dir: Path to the index directory
-        backend: Index backend ("sqlite" or "pickle")
+        backend: Index backend ("sqlite", "sqlite-v1", "sqlite-v2", or "pickle")
+        v2_index_dir: Optional v2 index directory for side-by-side API comparisons.
+        default_index_version: Index version used when the request omits one.
 
     Returns:
         Configured Flask app
     """
     app = Flask(__name__)
 
-    # Load search engine
+    # Load engines once at startup so request handling only selects a version.
     try:
-        if backend == "sqlite":
-            search_engine = SQLiteSearchEngine.from_index_dir(index_dir)
+        search_engines: dict[str, object] = {}
+        if backend in {"sqlite", "sqlite-v1"}:
+            search_engines["v1"] = SQLiteSearchEngine.from_index_dir(index_dir)
+        elif backend == "sqlite-v2":
+            search_engines["v2"] = SQLiteSearchEngineV2.from_index_dir(index_dir)
+            default_index_version = "v2"
+        elif backend == "pickle":
+            search_engines["v1"] = SearchEngine.from_index_dir(index_dir)
         else:
-            search_engine = SearchEngine.from_index_dir(index_dir)
+            raise ValueError(f"Unsupported backend: {backend}")
+
+        if v2_index_dir is not None and "v2" not in search_engines:
+            search_engines["v2"] = SQLiteSearchEngineV2.from_index_dir(v2_index_dir)
+
+        if default_index_version not in search_engines:
+            default_index_version = "v1" if "v1" in search_engines else "v2"
     except Exception as e:
         app.logger.error(f"Failed to load index from {index_dir}: {e}")
         raise
@@ -45,6 +66,8 @@ def create_app(index_dir: str, backend: str = "sqlite") -> Flask:
             {
                 "service": "queryquote-api",
                 "status": "ok",
+                "default_index_version": default_index_version,
+                "available_index_versions": sorted(search_engines),
                 "endpoints": {
                     "health": "/api/health",
                     "search": "/api/search",
@@ -60,7 +83,8 @@ def create_app(index_dir: str, backend: str = "sqlite") -> Flask:
             {
                 "query": "search query",
                 "top_k": 50,  (optional, default 50)
-                "authority_filter": false  (optional, default false)
+                "authority_filter": false,  (optional, default false)
+                "index_version": "v1"  (optional, "v1" or "v2")
             }
 
         Returns:
@@ -77,6 +101,7 @@ def create_app(index_dir: str, backend: str = "sqlite") -> Flask:
                     ...
                 ],
                 "query": "search query",
+                "index_version": "v1",
                 "authority_filter": false,
                 "count": 5
             }
@@ -86,12 +111,24 @@ def create_app(index_dir: str, backend: str = "sqlite") -> Flask:
             query = data.get("query", "").strip()
             top_k = data.get("top_k", DEFAULT_TOP_K)
             authority_filter = data.get("authority_filter") is True
+            index_version = data.get("index_version", default_index_version)
 
             if not query:
                 return jsonify(
                     {"error": "Query is required", "results": [], "count": 0}
                 ), 400
 
+            if index_version not in search_engines:
+                return jsonify(
+                    {
+                        "error": f"Index version is not available: {index_version}",
+                        "available_index_versions": sorted(search_engines),
+                        "results": [],
+                        "count": 0,
+                    }
+                ), 400
+
+            search_engine = search_engines[index_version]
             results = search_engine.search(
                 query,
                 top_k=top_k,
@@ -101,6 +138,7 @@ def create_app(index_dir: str, backend: str = "sqlite") -> Flask:
             return jsonify(
                 {
                     "query": query,
+                    "index_version": index_version,
                     "authority_filter": authority_filter,
                     "results": [
                         {
@@ -123,7 +161,13 @@ def create_app(index_dir: str, backend: str = "sqlite") -> Flask:
     @app.route("/api/health", methods=["GET"])
     def health() -> str:
         """Health check endpoint."""
-        return jsonify({"status": "ok"})
+        return jsonify(
+            {
+                "status": "ok",
+                "default_index_version": default_index_version,
+                "available_index_versions": sorted(search_engines),
+            }
+        )
 
     return app
 
@@ -139,8 +183,19 @@ def main() -> None:
     parser.add_argument(
         "--backend",
         default="sqlite",
-        choices=["sqlite", "pickle"],
+        choices=["sqlite", "sqlite-v1", "sqlite-v2", "pickle"],
         help="Index backend (default: sqlite)",
+    )
+    parser.add_argument(
+        "--v2-index-dir",
+        default=None,
+        help="Optional v2 SQLite index directory for side-by-side API comparisons",
+    )
+    parser.add_argument(
+        "--default-index-version",
+        default="v1",
+        choices=["v1", "v2"],
+        help="Default index version for requests that omit index_version",
     )
     parser.add_argument(
         "--host",
@@ -167,7 +222,14 @@ def main() -> None:
         return
 
     print(f"Loading {args.backend} index from {index_dir}...")
-    app = create_app(str(index_dir), backend=args.backend)
+    if args.v2_index_dir:
+        print(f"Loading v2 index from {args.v2_index_dir}...")
+    app = create_app(
+        str(index_dir),
+        backend=args.backend,
+        v2_index_dir=args.v2_index_dir,
+        default_index_version=args.default_index_version,
+    )
 
     print(f"Starting server on http://{args.host}:{args.port}")
     print("Press Ctrl+C to stop")

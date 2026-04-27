@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Prologue:
 Quick launcher for the QueryQuote API server.
-Last updated: Messaging now reflects API-only backend usage (no built-in UI).
+Last updated: 2026-04-27 - Added v1/v2 backend selection arguments for
+side-by-side SQLite index comparisons.
 """
 
 from __future__ import annotations
@@ -42,8 +43,19 @@ def main() -> None:
     parser.add_argument(
         "--backend",
         default="sqlite",
-        choices=["sqlite", "pickle"],
+        choices=["sqlite", "sqlite-v1", "sqlite-v2", "pickle"],
         help="Index backend (default: sqlite)",
+    )
+    parser.add_argument(
+        "--v2-index-dir",
+        default=None,
+        help="Optional v2 SQLite index directory for side-by-side API comparisons",
+    )
+    parser.add_argument(
+        "--default-index-version",
+        default="v1",
+        choices=["v1", "v2"],
+        help="Default index version for requests that omit index_version",
     )
     parser.add_argument(
         "--debug",
@@ -67,7 +79,14 @@ def main() -> None:
         sys.exit(1)
 
     print(f"Loading {args.backend} index from {index_dir}...")
-    app = create_app(str(index_dir), backend=args.backend)
+    if args.v2_index_dir:
+        print(f"Loading v2 index from {args.v2_index_dir}...")
+    app = create_app(
+        str(index_dir),
+        backend=args.backend,
+        v2_index_dir=args.v2_index_dir,
+        default_index_version=args.default_index_version,
+    )
 
     url = f"http://{args.host}:{args.port}"
     print("\nQueryQuote API Server")

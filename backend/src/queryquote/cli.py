@@ -1,7 +1,7 @@
 """Prologue:
 Command-line entry points for building, searching, and evaluating QueryQuote indexes.
-Last updated: 2026-04-26 - Added corpus-mode support for v2 builds so
-intersection and rest indexes can be generated separately with ETA progress.
+Last updated: 2026-04-27 - Added explicit v1/v2 SQLite search selection so
+the legacy and v2 indexes can be queried and evaluated independently.
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ from pathlib import Path
 
 from .config import DEFAULT_MAX_PASSAGE_TOKENS, DEFAULT_PASSAGE_OVERLAP, DEFAULT_TOP_K
 from .db_index import SQLiteSearchEngine, build_sqlite_index
-from .db_index_v2 import build_sqlite_index_v2
+from .db_index_v2 import SQLiteSearchEngineV2, build_sqlite_index_v2
 from .evaluation import evaluate_run, load_qrels, load_queries
 from .indexing import IndexBundle, build_index, save_index
 from .passages import collect_passages
@@ -20,7 +20,7 @@ from .search_engine import SearchEngine
 
 
 def cmd_build(args: argparse.Namespace) -> None:
-    if args.backend == "sqlite":
+    if args.backend in {"sqlite", "sqlite-v1"}:
         db_path = build_sqlite_index(
             data_dir=args.data_dir,
             output_dir=args.output_dir,
@@ -59,10 +59,7 @@ def cmd_build_v2(args: argparse.Namespace) -> None:
 
 
 def cmd_search(args: argparse.Namespace) -> None:
-    if args.backend == "sqlite":
-        engine = SQLiteSearchEngine.from_index_dir(args.index_dir)
-    else:
-        engine = SearchEngine.from_index_dir(args.index_dir)
+    engine = _load_search_engine(args)
 
     results = engine.search(
         args.query,
@@ -80,10 +77,7 @@ def cmd_search(args: argparse.Namespace) -> None:
 
 
 def cmd_evaluate(args: argparse.Namespace) -> None:
-    if args.backend == "sqlite":
-        engine = SQLiteSearchEngine.from_index_dir(args.index_dir)
-    else:
-        engine = SearchEngine.from_index_dir(args.index_dir)
+    engine = _load_search_engine(args)
 
     queries = load_queries(args.queries)
     qrels = load_qrels(args.qrels)
@@ -99,6 +93,18 @@ def cmd_evaluate(args: argparse.Namespace) -> None:
     print(json.dumps(metrics, indent=2))
 
 
+def _load_search_engine(args: argparse.Namespace):
+    backend = args.backend
+    index_version = getattr(args, "index_version", "v1")
+
+    if backend == "sqlite-v2" or (backend in {"sqlite", "sqlite-v1"} and index_version == "v2"):
+        v2_index_dir = getattr(args, "v2_index_dir", None) or args.index_dir
+        return SQLiteSearchEngineV2.from_index_dir(v2_index_dir)
+    if backend in {"sqlite", "sqlite-v1"}:
+        return SQLiteSearchEngine.from_index_dir(args.index_dir)
+    return SearchEngine.from_index_dir(args.index_dir)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="QueryQuote IR system")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -108,7 +114,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_build.add_argument("--output-dir", required=True, help="Where to save index")
     p_build.add_argument(
         "--backend",
-        choices=["sqlite", "pickle"],
+        choices=["sqlite", "sqlite-v1", "pickle"],
         default="sqlite",
         help="Index storage backend (sqlite is streaming and reusable)",
     )
@@ -183,9 +189,20 @@ def build_parser() -> argparse.ArgumentParser:
     p_search.add_argument("--index-dir", required=True)
     p_search.add_argument(
         "--backend",
-        choices=["sqlite", "pickle"],
+        choices=["sqlite", "sqlite-v1", "sqlite-v2", "pickle"],
         default="sqlite",
         help="Search backend",
+    )
+    p_search.add_argument(
+        "--index-version",
+        choices=["v1", "v2"],
+        default="v1",
+        help="SQLite index version to query when backend is sqlite",
+    )
+    p_search.add_argument(
+        "--v2-index-dir",
+        default=None,
+        help="Optional v2 SQLite index directory when querying v2 side-by-side",
     )
     p_search.add_argument("--query", required=True)
     p_search.add_argument("--top-k", type=int, default=DEFAULT_TOP_K)
@@ -200,9 +217,20 @@ def build_parser() -> argparse.ArgumentParser:
     p_eval.add_argument("--index-dir", required=True)
     p_eval.add_argument(
         "--backend",
-        choices=["sqlite", "pickle"],
+        choices=["sqlite", "sqlite-v1", "sqlite-v2", "pickle"],
         default="sqlite",
         help="Evaluation backend",
+    )
+    p_eval.add_argument(
+        "--index-version",
+        choices=["v1", "v2"],
+        default="v1",
+        help="SQLite index version to evaluate when backend is sqlite",
+    )
+    p_eval.add_argument(
+        "--v2-index-dir",
+        default=None,
+        help="Optional v2 SQLite index directory when evaluating v2 side-by-side",
     )
     p_eval.add_argument("--queries", required=True, help="JSONL with qid/query")
     p_eval.add_argument("--qrels", required=True, help="JSONL with qid/doc_id/relevance")

@@ -1510,3 +1510,831 @@ Close SQLite connection: 0.000711s
 ---
 Total Time: 7.380478s
 _________________________
+Query: "make him an offer he cannot refuse" | Authority Boost: Off
+Open SQLite connection: 0.001430s
+Tokenize query: 0.000030s
+Validate query and index metadata: 0.000002s
+Prepare BM25 query weights: 0.000014s
+Fetch postings and compute BM25 scores: 0.000291s
+Validate BM25 candidate scores: 0.000001s
+Check rerank pool for exact phrase candidates: 0.000089s
+Recover exact phrase candidates: 0.000164s
+Select rerank candidates: 0.000007s
+Normalize BM25 scores: 0.000005s
+Build rerank SQL placeholders: 0.000003s
+Fetch and decode rerank term positions: 0.000067s
+Fetch rerank passages: 0.000030s
+Apply quote-aware rerank scoring: 0.000407s
+Apply authority filter: 0.000001s
+Sort final scores: 0.000003s
+Fetch final result passages: 0.000045s
+Build SearchResult objects: 0.000009s
+Close SQLite connection: 0.000938s
+---
+Total Time: 0.003561s
+_________________________
+Query: "I'm gonna make him an offer he can't refuse." | Authority Boost: Off
+Open SQLite connection: 0.002467s
+Tokenize query: 0.000047s
+Validate query and index metadata: 0.000003s
+Prepare BM25 query weights: 0.000022s
+Fetch postings and compute BM25 scores: 7.778630s
+Validate BM25 candidate scores: 0.000006s
+Check rerank pool for exact phrase candidates: 1.319622s
+Recover exact phrase candidates: 0.000017s
+Select rerank candidates: 0.000945s
+Normalize BM25 scores: 0.001386s
+Build rerank SQL placeholders: 0.000054s
+Fetch and decode rerank term positions: 0.030059s
+Fetch rerank passages: 0.369123s
+Apply quote-aware rerank scoring: 0.073241s
+Apply authority filter: 0.000000s
+Sort final scores: 0.017364s
+Fetch final result passages: 0.000716s
+Build SearchResult objects: 0.000041s
+Close SQLite connection: 0.002956s
+---
+Total Time: 9.597496s
+_________________________
+Query: "May the Force be with you." | Authority Boost: Off
+Open SQLite connection: 0.000874s
+Tokenize query: 0.000030s
+Validate query and index metadata: 0.000001s
+Prepare BM25 query weights: 0.000006s
+Fetch postings and compute BM25 scores: 4.761619s
+Validate BM25 candidate scores: 0.000002s
+Check rerank pool for exact phrase candidates: 0.272558s
+Recover exact phrase candidates: 13.443452s
+Select rerank candidates: 0.002786s
+Normalize BM25 scores: 0.001464s
+Build rerank SQL placeholders: 0.000033s
+Fetch and decode rerank term positions: 0.364919s
+Fetch rerank passages: 0.191868s
+Apply quote-aware rerank scoring: 0.067622s
+Apply authority filter: 0.000001s
+Sort final scores: 0.002759s
+Fetch final result passages: 0.000149s
+Build SearchResult objects: 0.000007s
+Close SQLite connection: 0.001182s
+---
+Total Time: 19.111688s
+_________________________
+Query: "Why so serious?" | Authority Boost: Off
+Open SQLite connection: 0.000900s
+Tokenize query: 0.000010s
+Validate query and index metadata: 0.000000s
+Prepare BM25 query weights: 0.000005s
+Fetch postings and compute BM25 scores: 4.201115s
+Validate BM25 candidate scores: 0.000001s
+Check rerank pool for exact phrase candidates: 0.217200s
+Recover exact phrase candidates: 24.259383s
+Select rerank candidates: 0.001855s
+Normalize BM25 scores: 0.001138s
+Build rerank SQL placeholders: 0.000021s
+Fetch and decode rerank term positions: 0.468358s
+Fetch rerank passages: 0.229154s
+Apply quote-aware rerank scoring: 0.062242s
+Apply authority filter: 0.000000s
+Sort final scores: 0.003379s
+Fetch final result passages: 0.000176s
+Build SearchResult objects: 0.000010s
+Close SQLite connection: 0.001015s
+---
+Total Time: 29.446414s
+_________________________
+Query: "I'll be back." | Authority Boost: Off
+Open SQLite connection: 0.000541s
+Tokenize query: 0.000011s
+Validate query and index metadata: 0.000000s
+Prepare BM25 query weights: 0.000006s
+Fetch postings and compute BM25 scores: 4.086186s
+Validate BM25 candidate scores: 0.000001s
+Check rerank pool for exact phrase candidates: 0.011652s
+Recover exact phrase candidates: 22.517562s
+Select rerank candidates: 0.012384s
+Normalize BM25 scores: 0.001544s
+Build rerank SQL placeholders: 0.000027s
+Fetch and decode rerank term positions: 0.370997s
+Fetch rerank passages: 0.158752s
+Apply quote-aware rerank scoring: 0.064841s
+Apply authority filter: 0.000000s
+Sort final scores: 0.002728s
+Fetch final result passages: 0.000252s
+Build SearchResult objects: 0.000036s
+Close SQLite connection: 0.001030s
+---
+Total Time: 27.228928s
+_________________________
+Query: "Life is like a box of chocolates." | Authority Boost: Off
+Open SQLite connection: 0.005889s
+Tokenize query: 0.000048s
+Validate query and index metadata: 0.000002s
+Prepare BM25 query weights: 0.000030s
+Fetch postings and compute BM25 scores: 6.838215s
+Validate BM25 candidate scores: 0.000002s
+Check rerank pool for exact phrase candidates: 0.623357s
+Recover exact phrase candidates: 0.000300s
+Select rerank candidates: 0.002464s
+Normalize BM25 scores: 0.002980s
+Build rerank SQL placeholders: 0.000057s
+Fetch and decode rerank term positions: 0.026487s
+Fetch rerank passages: 0.430994s
+Apply quote-aware rerank scoring: 0.167942s
+Apply authority filter: 0.000001s
+Sort final scores: 0.011876s
+Fetch final result passages: 0.000561s
+Build SearchResult objects: 0.000019s
+Close SQLite connection: 0.001749s
+---
+Total Time: 8.115303s
+_________________________
+Query: "Say hello to my little friend!" | Authority Boost: Off
+Open SQLite connection: 0.007726s
+Tokenize query: 0.000056s
+Validate query and index metadata: 0.000002s
+Prepare BM25 query weights: 0.000022s
+Fetch postings and compute BM25 scores: 6.175791s
+Validate BM25 candidate scores: 0.000002s
+Check rerank pool for exact phrase candidates: 0.419216s
+Recover exact phrase candidates: 53.146146s
+Select rerank candidates: 0.004462s
+Normalize BM25 scores: 0.002098s
+Build rerank SQL placeholders: 0.000039s
+Fetch and decode rerank term positions: 0.583434s
+Fetch rerank passages: 0.210056s
+Apply quote-aware rerank scoring: 0.096537s
+Apply authority filter: 0.000001s
+Sort final scores: 0.004240s
+Fetch final result passages: 0.000380s
+Build SearchResult objects: 0.000013s
+Close SQLite connection: 0.001704s
+---
+Total Time: 60.652604s
+_________________________
+Query: "You can't handle the truth!" | Authority Boost: Off
+Open SQLite connection: 0.000875s
+Tokenize query: 0.000023s
+Validate query and index metadata: 0.000000s
+Prepare BM25 query weights: 0.000007s
+Fetch postings and compute BM25 scores: 4.887224s
+Validate BM25 candidate scores: 0.000001s
+Check rerank pool for exact phrase candidates: 0.678155s
+Recover exact phrase candidates: 15.574771s
+Select rerank candidates: 0.001578s
+Normalize BM25 scores: 0.001581s
+Build rerank SQL placeholders: 0.000024s
+Fetch and decode rerank term positions: 0.630186s
+Fetch rerank passages: 0.241948s
+Apply quote-aware rerank scoring: 0.077420s
+Apply authority filter: 0.000000s
+Sort final scores: 0.004663s
+Fetch final result passages: 0.000393s
+Build SearchResult objects: 0.000025s
+Close SQLite connection: 0.000641s
+---
+Total Time: 22.100217s
+_________________________
+Query: "I feel the need the need for speed!" | Authority Boost: Off
+Open SQLite connection: 0.001421s
+Tokenize query: 0.000019s
+Validate query and index metadata: 0.000001s
+Prepare BM25 query weights: 0.000015s
+Fetch postings and compute BM25 scores: 4.862942s
+Validate BM25 candidate scores: 0.000001s
+Check rerank pool for exact phrase candidates: 0.415135s
+Recover exact phrase candidates: 7.820753s
+Select rerank candidates: 0.001487s
+Normalize BM25 scores: 0.001164s
+Build rerank SQL placeholders: 0.000024s
+Fetch and decode rerank term positions: 0.502911s
+Fetch rerank passages: 0.236134s
+Apply quote-aware rerank scoring: 0.079887s
+Apply authority filter: 0.000000s
+Sort final scores: 0.003097s
+Fetch final result passages: 0.000183s
+Build SearchResult objects: 0.000008s
+Close SQLite connection: 0.000627s
+---
+Total Time: 13.926182s
+_________________________
+Query: "Nobody puts Baby in a corner." | Authority Boost: Off
+Open SQLite connection: 0.000669s
+Tokenize query: 0.000016s
+Validate query and index metadata: 0.000001s
+Prepare BM25 query weights: 0.000006s
+Fetch postings and compute BM25 scores: 6.932973s
+Validate BM25 candidate scores: 0.000001s
+Check rerank pool for exact phrase candidates: 0.246106s
+Recover exact phrase candidates: 4.588645s
+Select rerank candidates: 0.001216s
+Normalize BM25 scores: 0.001154s
+Build rerank SQL placeholders: 0.000023s
+Fetch and decode rerank term positions: 0.381008s
+Fetch rerank passages: 0.082138s
+Apply quote-aware rerank scoring: 0.075725s
+Apply authority filter: 0.000001s
+Sort final scores: 0.002729s
+Fetch final result passages: 0.000222s
+Build SearchResult objects: 0.000008s
+Close SQLite connection: 0.001080s
+---
+Total Time: 12.314135s
+_________________________
+Query: "You talking to me?" | Authority Boost: Off
+Open SQLite connection: 0.000595s
+Tokenize query: 0.000014s
+Validate query and index metadata: 0.000001s
+Prepare BM25 query weights: 0.000006s
+Fetch postings and compute BM25 scores: 3.003080s
+Validate BM25 candidate scores: 0.000001s
+Check rerank pool for exact phrase candidates: 0.215481s
+Recover exact phrase candidates: 30.147012s
+Select rerank candidates: 0.010655s
+Normalize BM25 scores: 0.001483s
+Build rerank SQL placeholders: 0.000030s
+Fetch and decode rerank term positions: 0.501123s
+Fetch rerank passages: 0.217421s
+Apply quote-aware rerank scoring: 0.092984s
+Apply authority filter: 0.000000s
+Sort final scores: 0.003980s
+Fetch final result passages: 0.000826s
+Build SearchResult objects: 0.000013s
+Close SQLite connection: 0.002238s
+---
+Total Time: 34.198024s
+_________________________
+Query: "I see dead people." | Authority Boost: Off
+Open SQLite connection: 0.000801s
+Tokenize query: 0.000029s
+Validate query and index metadata: 0.000001s
+Prepare BM25 query weights: 0.000019s
+Fetch postings and compute BM25 scores: 3.037293s
+Validate BM25 candidate scores: 0.000001s
+Check rerank pool for exact phrase candidates: 0.218072s
+Recover exact phrase candidates: 28.783588s
+Select rerank candidates: 0.007286s
+Normalize BM25 scores: 0.005803s
+Build rerank SQL placeholders: 0.000120s
+Fetch and decode rerank term positions: 0.595932s
+Fetch rerank passages: 0.197890s
+Apply quote-aware rerank scoring: 0.064942s
+Apply authority filter: 0.000000s
+Sort final scores: 0.003486s
+Fetch final result passages: 0.000225s
+Build SearchResult objects: 0.000020s
+Close SQLite connection: 0.001228s
+---
+Total Time: 32.917142s
+_________________________
+Query: "Houston, we have a problem." | Authority Boost: Off
+Open SQLite connection: 0.000799s
+Tokenize query: 0.000015s
+Validate query and index metadata: 0.000001s
+Prepare BM25 query weights: 0.000008s
+Fetch postings and compute BM25 scores: 3.698638s
+Validate BM25 candidate scores: 0.000001s
+Check rerank pool for exact phrase candidates: 0.240235s
+Recover exact phrase candidates: 0.000163s
+Select rerank candidates: 0.001269s
+Normalize BM25 scores: 0.001019s
+Build rerank SQL placeholders: 0.000025s
+Fetch and decode rerank term positions: 0.028459s
+Fetch rerank passages: 0.229615s
+Apply quote-aware rerank scoring: 0.066524s
+Apply authority filter: 0.000001s
+Sort final scores: 0.002209s
+Fetch final result passages: 0.000262s
+Build SearchResult objects: 0.000010s
+Close SQLite connection: 0.001168s
+---
+Total Time: 4.270793s
+_________________________
+Query: "Why so serious?" | Authority Boost: Off
+Open SQLite connection: 0.000754s
+Tokenize query: 0.000011s
+Validate query and index metadata: 0.000001s
+Prepare BM25 query weights: 0.000006s
+Fetch postings and compute BM25 scores: 4.268249s
+Validate BM25 candidate scores: 0.000001s
+Check rerank pool for exact phrase candidates: 0.217629s
+Recover exact phrase candidates: 23.933584s
+Select rerank candidates: 0.002068s
+Normalize BM25 scores: 0.001211s
+Build rerank SQL placeholders: 0.000025s
+Fetch and decode rerank term positions: 0.447423s
+Fetch rerank passages: 0.205118s
+Apply quote-aware rerank scoring: 0.059681s
+Apply authority filter: 0.000000s
+Sort final scores: 0.002464s
+Fetch final result passages: 0.000239s
+Build SearchResult objects: 0.000010s
+Close SQLite connection: 0.000482s
+---
+Total Time: 29.139266s
+_________________________
+Query: "I'll be back." | Authority Boost: Off
+Open SQLite connection: 0.000783s
+Tokenize query: 0.000014s
+Validate query and index metadata: 0.000001s
+Prepare BM25 query weights: 0.000007s
+Fetch postings and compute BM25 scores: 3.837553s
+Validate BM25 candidate scores: 0.000001s
+Check rerank pool for exact phrase candidates: 0.010717s
+Recover exact phrase candidates: 19.301548s
+Select rerank candidates: 0.012776s
+Normalize BM25 scores: 0.001602s
+Build rerank SQL placeholders: 0.000029s
+Fetch and decode rerank term positions: 0.345971s
+Fetch rerank passages: 0.105614s
+Apply quote-aware rerank scoring: 0.069465s
+Apply authority filter: 0.000000s
+Sort final scores: 0.003098s
+Fetch final result passages: 0.000266s
+Build SearchResult objects: 0.000015s
+Close SQLite connection: 0.000577s
+---
+Total Time: 23.690507s
+_________________________
+Query: "Life is like a box of chocolates. You never know what you're gonna get." | Authority Boost: Off
+Open SQLite connection: 0.001332s
+Tokenize query: 0.000027s
+Validate query and index metadata: 0.000001s
+Prepare BM25 query weights: 0.000010s
+Fetch postings and compute BM25 scores: 4.525432s
+Validate BM25 candidate scores: 0.000001s
+Check rerank pool for exact phrase candidates: 1.019871s
+Recover exact phrase candidates: 0.000041s
+Select rerank candidates: 0.001095s
+Normalize BM25 scores: 0.001111s
+Build rerank SQL placeholders: 0.000026s
+Fetch and decode rerank term positions: 0.028674s
+Fetch rerank passages: 0.275920s
+Apply quote-aware rerank scoring: 0.092047s
+Apply authority filter: 0.000000s
+Sort final scores: 0.002783s
+Fetch final result passages: 0.000407s
+Build SearchResult objects: 0.000011s
+Close SQLite connection: 0.001047s
+---
+Total Time: 5.950324s
+_________________________
+Query: "Say hello to my little friend!" | Authority Boost: Off
+Open SQLite connection: 0.000856s
+Tokenize query: 0.000115s
+Validate query and index metadata: 0.000002s
+Prepare BM25 query weights: 0.000018s
+Fetch postings and compute BM25 scores: 3.028084s
+Validate BM25 candidate scores: 0.000001s
+Check rerank pool for exact phrase candidates: 0.221526s
+Recover exact phrase candidates: 30.061410s
+Select rerank candidates: 0.004344s
+Normalize BM25 scores: 0.003467s
+Build rerank SQL placeholders: 0.000060s
+Fetch and decode rerank term positions: 0.503411s
+Fetch rerank passages: 0.185024s
+Apply quote-aware rerank scoring: 0.157190s
+Apply authority filter: 0.000001s
+Sort final scores: 0.007103s
+Fetch final result passages: 0.000701s
+Build SearchResult objects: 0.000026s
+Close SQLite connection: 0.001584s
+---
+Total Time: 34.176257s
+_________________________
+Query: "To infinity and beyond!" | Authority Boost: Off
+Open SQLite connection: 0.002143s
+Tokenize query: 0.000050s
+Validate query and index metadata: 0.000002s
+Prepare BM25 query weights: 0.000021s
+Fetch postings and compute BM25 scores: 7.000374s
+Validate BM25 candidate scores: 0.000001s
+Check rerank pool for exact phrase candidates: 0.177720s
+Recover exact phrase candidates: 0.000185s
+Select rerank candidates: 0.004165s
+Normalize BM25 scores: 0.003032s
+Build rerank SQL placeholders: 0.000056s
+Fetch and decode rerank term positions: 0.012132s
+Fetch rerank passages: 0.263557s
+Apply quote-aware rerank scoring: 0.168478s
+Apply authority filter: 0.000001s
+Sort final scores: 0.010422s
+Fetch final result passages: 0.000446s
+Build SearchResult objects: 0.000032s
+Close SQLite connection: 0.001635s
+---
+Total Time: 7.646427s
+_________________________
+Query: "My precious." | Authority Boost: Off
+Open SQLite connection: 0.004274s
+Tokenize query: 0.000037s
+Validate query and index metadata: 0.000002s
+Prepare BM25 query weights: 0.000021s
+Fetch postings and compute BM25 scores: 7.283735s
+Validate BM25 candidate scores: 0.000002s
+Check rerank pool for exact phrase candidates: 0.293417s
+Recover exact phrase candidates: 0.000454s
+Select rerank candidates: 0.004536s
+Normalize BM25 scores: 0.003453s
+Build rerank SQL placeholders: 0.000055s
+Fetch and decode rerank term positions: 0.014932s
+Fetch rerank passages: 0.375226s
+Apply quote-aware rerank scoring: 0.211591s
+Apply authority filter: 0.000001s
+Sort final scores: 0.014670s
+Fetch final result passages: 0.000729s
+Build SearchResult objects: 0.000031s
+Close SQLite connection: 0.001551s
+---
+Total Time: 8.210663s
+_________________________
+Query: "You can't handle the truth!" | Authority Boost: Off
+Open SQLite connection: 0.003214s
+Tokenize query: 0.000112s
+Validate query and index metadata: 0.000002s
+Prepare BM25 query weights: 0.000024s
+Fetch postings and compute BM25 scores: 6.359612s
+Validate BM25 candidate scores: 0.000004s
+Check rerank pool for exact phrase candidates: 0.840402s
+Recover exact phrase candidates: 23.197888s
+Select rerank candidates: 0.004980s
+Normalize BM25 scores: 0.003273s
+Build rerank SQL placeholders: 0.000051s
+Fetch and decode rerank term positions: 1.072022s
+Fetch rerank passages: 0.296845s
+Apply quote-aware rerank scoring: 0.165749s
+Apply authority filter: 0.000001s
+Sort final scores: 0.006367s
+Fetch final result passages: 0.000891s
+Build SearchResult objects: 0.000028s
+Close SQLite connection: 0.001486s
+---
+Total Time: 31.954405s
+_________________________
+Query: "Keep your friends close, but your enemies closer." | Authority Boost: Off
+Open SQLite connection: 0.001782s
+Tokenize query: 0.000045s
+Validate query and index metadata: 0.000002s
+Prepare BM25 query weights: 0.000019s
+Fetch postings and compute BM25 scores: 8.270510s
+Validate BM25 candidate scores: 0.000003s
+Check rerank pool for exact phrase candidates: 0.869008s
+Recover exact phrase candidates: 0.000202s
+Select rerank candidates: 0.003039s
+Normalize BM25 scores: 0.004131s
+Build rerank SQL placeholders: 0.000092s
+Fetch and decode rerank term positions: 0.111306s
+Fetch rerank passages: 0.329937s
+Apply quote-aware rerank scoring: 0.227874s
+Apply authority filter: 0.000001s
+Sort final scores: 0.006300s
+Fetch final result passages: 0.000561s
+Build SearchResult objects: 0.000030s
+Close SQLite connection: 0.001514s
+---
+Total Time: 9.827915s
+_________________________
+Query: "Carpe diem. Seize the day, boys." | Authority Boost: Off
+Open SQLite connection: 0.002751s
+Tokenize query: 0.000068s
+Validate query and index metadata: 0.000003s
+Prepare BM25 query weights: 0.000027s
+Fetch postings and compute BM25 scores: 7.873643s
+Validate BM25 candidate scores: 0.000001s
+Check rerank pool for exact phrase candidates: 0.336382s
+Recover exact phrase candidates: 0.133449s
+Select rerank candidates: 0.001125s
+Normalize BM25 scores: 0.001245s
+Build rerank SQL placeholders: 0.000025s
+Fetch and decode rerank term positions: 0.008649s
+Fetch rerank passages: 0.177327s
+Apply quote-aware rerank scoring: 0.079064s
+Apply authority filter: 0.000000s
+Sort final scores: 0.002696s
+Fetch final result passages: 0.000225s
+Build SearchResult objects: 0.000011s
+Close SQLite connection: 0.000693s
+---
+Total Time: 8.617839s
+_________________________
+Query: "I feel the need—the need for speed!" | Authority Boost: Off
+Open SQLite connection: 0.000784s
+Tokenize query: 0.000771s
+Validate query and index metadata: 0.000001s
+Prepare BM25 query weights: 0.000076s
+Fetch postings and compute BM25 scores: 4.900523s
+Validate BM25 candidate scores: 0.000002s
+Check rerank pool for exact phrase candidates: 0.415742s
+Recover exact phrase candidates: 7.997379s
+Select rerank candidates: 0.002790s
+Normalize BM25 scores: 0.001715s
+Build rerank SQL placeholders: 0.000028s
+Fetch and decode rerank term positions: 0.420222s
+Fetch rerank passages: 0.175489s
+Apply quote-aware rerank scoring: 0.095051s
+Apply authority filter: 0.000000s
+Sort final scores: 0.003939s
+Fetch final result passages: 0.000271s
+Build SearchResult objects: 0.000034s
+Close SQLite connection: 0.001693s
+---
+Total Time: 14.016976s
+_________________________
+Query: "Nobody puts Baby in a corner." | Authority Boost: Off
+Open SQLite connection: 0.000900s
+Tokenize query: 0.000018s
+Validate query and index metadata: 0.000001s
+Prepare BM25 query weights: 0.000007s
+Fetch postings and compute BM25 scores: 6.772197s
+Validate BM25 candidate scores: 0.000001s
+Check rerank pool for exact phrase candidates: 0.259130s
+Recover exact phrase candidates: 4.666901s
+Select rerank candidates: 0.001191s
+Normalize BM25 scores: 0.001387s
+Build rerank SQL placeholders: 0.000025s
+Fetch and decode rerank term positions: 0.132567s
+Fetch rerank passages: 0.050925s
+Apply quote-aware rerank scoring: 0.075721s
+Apply authority filter: 0.000000s
+Sort final scores: 0.003172s
+Fetch final result passages: 0.000239s
+Build SearchResult objects: 0.000011s
+Close SQLite connection: 0.000977s
+---
+Total Time: 11.965732s
+_________________________
+Query: "You had me at hello." | Authority Boost: Off
+Open SQLite connection: 0.000920s
+Tokenize query: 0.000013s
+Validate query and index metadata: 0.000001s
+Prepare BM25 query weights: 0.000006s
+Fetch postings and compute BM25 scores: 3.989179s
+Validate BM25 candidate scores: 0.000001s
+Check rerank pool for exact phrase candidates: 0.093671s
+Recover exact phrase candidates: 38.576882s
+Select rerank candidates: 0.003690s
+Normalize BM25 scores: 0.004161s
+Build rerank SQL placeholders: 0.000125s
+Fetch and decode rerank term positions: 0.536898s
+Fetch rerank passages: 0.236344s
+Apply quote-aware rerank scoring: 0.172062s
+Apply authority filter: 0.000001s
+Sort final scores: 0.007426s
+Fetch final result passages: 0.001208s
+Build SearchResult objects: 0.000109s
+Close SQLite connection: 0.001802s
+---
+Total Time: 43.626072s
+_________________________
+Query: "I'm walking here! I'm walking here!" | Authority Boost: Off
+Open SQLite connection: 0.006351s
+Tokenize query: 0.000041s
+Validate query and index metadata: 0.000002s
+Prepare BM25 query weights: 0.000025s
+Fetch postings and compute BM25 scores: 8.134357s
+Validate BM25 candidate scores: 0.000010s
+Check rerank pool for exact phrase candidates: 0.491590s
+Recover exact phrase candidates: 14.668546s
+Select rerank candidates: 0.001429s
+Normalize BM25 scores: 0.001149s
+Build rerank SQL placeholders: 0.000022s
+Fetch and decode rerank term positions: 0.580093s
+Fetch rerank passages: 0.264161s
+Apply quote-aware rerank scoring: 0.063394s
+Apply authority filter: 0.000000s
+Sort final scores: 0.002471s
+Fetch final result passages: 0.000200s
+Build SearchResult objects: 0.000020s
+Close SQLite connection: 0.000777s
+---
+Total Time: 24.214969s
+_________________________
+Query: "Here's looking at you, kid." | Authority Boost: Off
+Open SQLite connection: 0.000982s
+Tokenize query: 0.000028s
+Validate query and index metadata: 0.000002s
+Prepare BM25 query weights: 0.000015s
+Fetch postings and compute BM25 scores: 4.799544s
+Validate BM25 candidate scores: 0.000002s
+Check rerank pool for exact phrase candidates: 0.641975s
+Recover exact phrase candidates: 48.226847s
+Select rerank candidates: 0.002647s
+Normalize BM25 scores: 0.002642s
+Build rerank SQL placeholders: 0.000058s
+Fetch and decode rerank term positions: 0.971862s
+Fetch rerank passages: 0.331010s
+Apply quote-aware rerank scoring: 0.169432s
+Apply authority filter: 0.000001s
+Sort final scores: 0.008397s
+Fetch final result passages: 0.000619s
+Build SearchResult objects: 0.000047s
+Close SQLite connection: 0.003123s
+---
+Total Time: 55.162618s
+_________________________
+Query: "I'm gonna make him an offer he can't refuse." | Authority Boost: Off
+Open SQLite connection: 0.001991s
+Tokenize query: 0.000039s
+Validate query and index metadata: 0.000003s
+Prepare BM25 query weights: 0.000017s
+Fetch postings and compute BM25 scores: 8.023353s
+Validate BM25 candidate scores: 0.000002s
+Check rerank pool for exact phrase candidates: 1.694194s
+Recover exact phrase candidates: 0.000019s
+Select rerank candidates: 0.002259s
+Normalize BM25 scores: 0.003492s
+Build rerank SQL placeholders: 0.000071s
+Fetch and decode rerank term positions: 0.072400s
+Fetch rerank passages: 0.468282s
+Apply quote-aware rerank scoring: 0.179041s
+Apply authority filter: 0.000002s
+Sort final scores: 0.008076s
+Fetch final result passages: 0.001790s
+Build SearchResult objects: 0.000026s
+Close SQLite connection: 0.001199s
+---
+Total Time: 10.457989s
+_________________________
+Query: "You don't understand! I coulda had class. I coulda been a contender." | Authority Boost: Off
+Open SQLite connection: 0.002008s
+Tokenize query: 0.000065s
+Validate query and index metadata: 0.000002s
+Prepare BM25 query weights: 0.000025s
+Fetch postings and compute BM25 scores: 7.114520s
+Validate BM25 candidate scores: 0.000001s
+Check rerank pool for exact phrase candidates: 1.664622s
+Recover exact phrase candidates: 0.000109s
+Select rerank candidates: 0.016064s
+Normalize BM25 scores: 0.004397s
+Build rerank SQL placeholders: 0.000077s
+Fetch and decode rerank term positions: 0.056199s
+Fetch rerank passages: 0.502590s
+Apply quote-aware rerank scoring: 0.271326s
+Apply authority filter: 0.000001s
+Sort final scores: 0.011843s
+Fetch final result passages: 0.000736s
+Build SearchResult objects: 0.000024s
+Close SQLite connection: 0.002433s
+---
+Total Time: 9.649500s
+_________________________
+Query: "Toto, I've a feeling we're not in Kansas anymore." | Authority Boost: Off
+Open SQLite connection: 0.001596s
+Tokenize query: 0.000039s
+Validate query and index metadata: 0.000001s
+Prepare BM25 query weights: 0.000016s
+Fetch postings and compute BM25 scores: 6.780631s
+Validate BM25 candidate scores: 0.000003s
+Check rerank pool for exact phrase candidates: 0.982698s
+Recover exact phrase candidates: 0.000014s
+Select rerank candidates: 0.002227s
+Normalize BM25 scores: 0.003580s
+Build rerank SQL placeholders: 0.000115s
+Fetch and decode rerank term positions: 0.067411s
+Fetch rerank passages: 0.291955s
+Apply quote-aware rerank scoring: 0.237162s
+Apply authority filter: 0.000002s
+Sort final scores: 0.009412s
+Fetch final result passages: 0.000730s
+Build SearchResult objects: 0.000024s
+Close SQLite connection: 0.002461s
+---
+Total Time: 8.382503s
+_________________________
+Query: "May the Force be with you." | Authority Boost: Off
+Open SQLite connection: 0.004016s
+Tokenize query: 0.001359s
+Validate query and index metadata: 0.000003s
+Prepare BM25 query weights: 0.000030s
+Fetch postings and compute BM25 scores: 6.901847s
+Validate BM25 candidate scores: 0.000003s
+Check rerank pool for exact phrase candidates: 0.205374s
+Recover exact phrase candidates: 21.442438s
+Select rerank candidates: 0.006090s
+Normalize BM25 scores: 0.003983s
+Build rerank SQL placeholders: 0.000071s
+Fetch and decode rerank term positions: 0.592341s
+Fetch rerank passages: 0.320565s
+Apply quote-aware rerank scoring: 0.145671s
+Apply authority filter: 0.000001s
+Sort final scores: 0.007214s
+Fetch final result passages: 0.000414s
+Build SearchResult objects: 0.000023s
+Close SQLite connection: 0.001324s
+---
+Total Time: 29.633955s
+_________________________
+Query: "Go ahead, make my day." | Authority Boost: Off
+Open SQLite connection: 0.001695s
+Tokenize query: 0.000034s
+Validate query and index metadata: 0.000002s
+Prepare BM25 query weights: 0.000021s
+Fetch postings and compute BM25 scores: 6.130933s
+Validate BM25 candidate scores: 0.000002s
+Check rerank pool for exact phrase candidates: 0.562069s
+Recover exact phrase candidates: 47.818237s
+Select rerank candidates: 0.003724s
+Normalize BM25 scores: 0.003262s
+Build rerank SQL placeholders: 0.000062s
+Fetch and decode rerank term positions: 0.807651s
+Fetch rerank passages: 0.333281s
+Apply quote-aware rerank scoring: 0.154355s
+Apply authority filter: 0.000001s
+Sort final scores: 0.007985s
+Fetch final result passages: 0.000690s
+Build SearchResult objects: 0.000072s
+Close SQLite connection: 0.001228s
+---
+Total Time: 55.826680s
+_________________________
+Query: "I'm the king of the world!" | Authority Boost: Off
+Open SQLite connection: 0.002338s
+Tokenize query: 0.000041s
+Validate query and index metadata: 0.000002s
+Prepare BM25 query weights: 0.000053s
+Fetch postings and compute BM25 scores: 4.598196s
+Validate BM25 candidate scores: 0.000008s
+Check rerank pool for exact phrase candidates: 0.305678s
+Recover exact phrase candidates: 25.141415s
+Select rerank candidates: 0.004674s
+Normalize BM25 scores: 0.003820s
+Build rerank SQL placeholders: 0.000050s
+Fetch and decode rerank term positions: 0.567540s
+Fetch rerank passages: 0.265232s
+Apply quote-aware rerank scoring: 0.230679s
+Apply authority filter: 0.000001s
+Sort final scores: 0.010098s
+Fetch final result passages: 0.000777s
+Build SearchResult objects: 0.000039s
+Close SQLite connection: 0.002662s
+---
+Total Time: 31.135950s
+_________________________
+Query: "E.T. phone home." | Authority Boost: Off
+Open SQLite connection: 0.003043s
+Tokenize query: 0.000053s
+Validate query and index metadata: 0.000002s
+Prepare BM25 query weights: 0.000021s
+Fetch postings and compute BM25 scores: 5.850532s
+Validate BM25 candidate scores: 0.000002s
+Check rerank pool for exact phrase candidates: 0.307448s
+Recover exact phrase candidates: 14.970940s
+Select rerank candidates: 0.003170s
+Normalize BM25 scores: 0.003973s
+Build rerank SQL placeholders: 0.000074s
+Fetch and decode rerank term positions: 0.432625s
+Fetch rerank passages: 0.184985s
+Apply quote-aware rerank scoring: 0.153131s
+Apply authority filter: 0.000001s
+Sort final scores: 0.007476s
+Fetch final result passages: 0.000654s
+Build SearchResult objects: 0.000046s
+Close SQLite connection: 0.001259s
+---
+Total Time: 21.921018s
+_________________________
+Query: "You talking to me?" | Authority Boost: Off
+Open SQLite connection: 0.003698s
+Tokenize query: 0.000042s
+Validate query and index metadata: 0.000002s
+Prepare BM25 query weights: 0.000020s
+Fetch postings and compute BM25 scores: 4.682853s
+Validate BM25 candidate scores: 0.000002s
+Check rerank pool for exact phrase candidates: 0.350665s
+Recover exact phrase candidates: 50.214507s
+Select rerank candidates: 0.013982s
+Normalize BM25 scores: 0.003515s
+Build rerank SQL placeholders: 0.000067s
+Fetch and decode rerank term positions: 0.659721s
+Fetch rerank passages: 0.327038s
+Apply quote-aware rerank scoring: 0.168102s
+Apply authority filter: 0.000001s
+Sort final scores: 0.006896s
+Fetch final result passages: 0.000741s
+Build SearchResult objects: 0.000072s
+Close SQLite connection: 0.001792s
+---
+Total Time: 56.435467s
+_________________________
+Query: "Here's Johnny!" | Authority Boost: Off
+Open SQLite connection: 0.001962s
+Tokenize query: 0.000095s
+Validate query and index metadata: 0.000008s
+Prepare BM25 query weights: 0.000075s
+Fetch postings and compute BM25 scores: 3.468181s
+Validate BM25 candidate scores: 0.000001s
+Check rerank pool for exact phrase candidates: 0.209080s
+Recover exact phrase candidates: 7.775991s
+Select rerank candidates: 0.005578s
+Normalize BM25 scores: 0.003270s
+Build rerank SQL placeholders: 0.000068s
+Fetch and decode rerank term positions: 0.498941s
+Fetch rerank passages: 0.193096s
+Apply quote-aware rerank scoring: 0.163035s
+Apply authority filter: 0.000001s
+Sort final scores: 0.008840s
+Fetch final result passages: 0.000751s
+Build SearchResult objects: 0.000043s
+Close SQLite connection: 0.001476s
+---
+Total Time: 12.332380s
+_________________________

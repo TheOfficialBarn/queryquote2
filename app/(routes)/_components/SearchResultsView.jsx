@@ -7,8 +7,8 @@
  * Prologue:
  * Shared search results experience for QueryQuote route pages.
  * 
- * Last updated: 2026-04-27 - Added function-level prologue comments so each
- * search results helper and component is easier to review.
+ * Last updated: 2026-04-27 - Added URL-backed Legacy Search selection so
+ * frontend searches can target v1 while default searches use v2.
  */
 
 import { useEffect, useMemo, useState } from "react";
@@ -36,16 +36,18 @@ export function normalizeSearchPage(value) {
 
 
 // Builds a shareable search results URL from the query, page, route path, and
-// optional Authority Boost setting.
+// optional Authority Boost and Legacy Search settings.
 export function buildSearchResultsUrl({
   query,
   page = 1,
   authorityFilter,
+  legacySearch = false,
   pathname = "/search",
 }) {
   const params = new URLSearchParams({
     q: query.trim(),
     page: String(normalizeSearchPage(page)),
+    index_version: legacySearch ? "v1" : "v2",
   });
 
   if (authorityFilter) {
@@ -80,14 +82,16 @@ function SearchIcon() {
 
 
 // Renders the sticky results-page search bar, including query input, search
-// button, Authority Boost toggle, and query duration display.
+// button, search mode controls, and query duration display.
 function TopSearchBar({
   query,
   authorityFilter,
+  legacySearch,
   isSearching,
   queryDurationMs,
   onQueryChange,
   onAuthorityFilterChange,
+  onLegacySearchChange,
   onSubmit,
 }) {
   return (
@@ -140,6 +144,18 @@ function TopSearchBar({
             aria-pressed={authorityFilter}
           >
             Authority Boost
+          </button>
+          <button
+            type="button"
+            onClick={() => onLegacySearchChange(!legacySearch)}
+            className={`rounded-full border px-3 py-1 text-sm transition-colors active:scale-95 ${
+              legacySearch
+                ? "border-amber-300/70 bg-amber-400/55 text-black"
+                : "border-white/20 bg-white/10 text-white/85 hover:bg-white/20"
+            }`}
+            aria-pressed={legacySearch}
+          >
+            Legacy Search
           </button>
         </div>
       </div>
@@ -250,8 +266,10 @@ function QueryDurationText({ durationMs }) {
 
 
 // Renders the right-side search metadata panel that summarizes the current
-// query, result count, requested count, page, and Authority Boost state.
-function KnowledgePanel({ query, count, currentPage, authorityFilter }) {
+// query, result count, requested count, page, index version, and boost state.
+function KnowledgePanel({ query, count, currentPage, authorityFilter, indexVersion }) {
+  const isLegacySearch = indexVersion === "v1";
+
   return (
     <aside className="rounded-2xl border border-white/15 bg-black/40 p-5">
       <h3 className={`${movieFont.className} text-3xl`}>
@@ -268,6 +286,9 @@ function KnowledgePanel({ query, count, currentPage, authorityFilter }) {
         <p className="text-white/90">Requested count: <span className="text-white">Top 50</span></p>
         <p className="text-white/90">Page: <span className="text-white">{currentPage}</span></p>
         <p className="text-white/90">
+          Search index: <span className="text-white">{isLegacySearch ? "Legacy v1" : "V2"}</span>
+        </p>
+        <p className="text-white/90">
           Authority filter: <span className="text-white">{authorityFilter ? "On" : "Off"}</span>
         </p>
       </div>
@@ -283,11 +304,13 @@ export default function SearchResultsView({
   initialQuery,
   initialPage = 1,
   initialAuthorityFilter,
+  initialIndexVersion = "v2",
   pathname = "/search",
 }) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
   const [authorityFilter, setAuthorityFilter] = useState(initialAuthorityFilter);
+  const [legacySearch, setLegacySearch] = useState(initialIndexVersion === "v1");
   const [responseData, setResponseData] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -323,6 +346,7 @@ export default function SearchResultsView({
             query: initialQuery.trim(),
             top_k: defaultSearchTopK,
             authority_filter: initialAuthorityFilter,
+            index_version: initialIndexVersion,
           }),
           signal: controller.signal,
         });
@@ -354,7 +378,7 @@ export default function SearchResultsView({
     fetchResults();
 
     return () => controller.abort();
-  }, [initialAuthorityFilter, initialQuery]);
+  }, [initialAuthorityFilter, initialIndexVersion, initialQuery]);
 
   const results = responseData?.results ?? [];
   const resultCount = typeof responseData?.count === "number" ? responseData.count : 0;
@@ -373,10 +397,11 @@ export default function SearchResultsView({
       return `Searching for "${initialQuery}"...`;
     }
 
+    const indexLabel = responseData?.index_version === "v1" ? " with legacy search" : "";
     const filterLabel = responseData?.authority_filter ? " with authority filter" : "";
     const pageLabel = resultCount > searchResultsPerPage ? `, page ${currentPage} of ${pageCount}` : "";
-    return `${resultCount} result${resultCount === 1 ? "" : "s"}${filterLabel}${pageLabel}`;
-  }, [currentPage, initialQuery, isSearching, pageCount, responseData?.authority_filter, resultCount]);
+    return `${resultCount} result${resultCount === 1 ? "" : "s"}${indexLabel}${filterLabel}${pageLabel}`;
+  }, [currentPage, initialQuery, isSearching, pageCount, responseData?.authority_filter, responseData?.index_version, resultCount]);
 
 
   // Handles a new search from the sticky search bar by validating
@@ -388,7 +413,7 @@ export default function SearchResultsView({
       return;
     }
 
-    router.push(buildSearchResultsUrl({ query, authorityFilter, pathname }));
+    router.push(buildSearchResultsUrl({ query, authorityFilter, legacySearch, pathname }));
   }
 
 
@@ -400,6 +425,7 @@ export default function SearchResultsView({
         query: initialQuery,
         page,
         authorityFilter: initialAuthorityFilter,
+        legacySearch: initialIndexVersion === "v1",
         pathname,
       }),
     );
@@ -410,10 +436,12 @@ export default function SearchResultsView({
       <TopSearchBar
         query={query}
         authorityFilter={authorityFilter}
+        legacySearch={legacySearch}
         isSearching={isSearching}
         queryDurationMs={queryDurationMs}
         onQueryChange={setQuery}
         onAuthorityFilterChange={setAuthorityFilter}
+        onLegacySearchChange={setLegacySearch}
         onSubmit={handleSubmit}
       />
 
@@ -441,6 +469,7 @@ export default function SearchResultsView({
             count={resultCount}
             currentPage={currentPage}
             authorityFilter={initialAuthorityFilter}
+            indexVersion={initialIndexVersion}
           />
         </div>
       </section>

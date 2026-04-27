@@ -5,8 +5,8 @@
  * Prologue:
  * Server-side proxy route for quote search requests from the Next.js frontend.
  * 
- * Last updated: 2026-04-26 - Updated the proxy fallback result count to Top 50
- * so omitted top_k requests match the fixed paginated frontend behavior.
+ * Last updated: 2026-04-27 - Defaults frontend searches to v2 while still
+ * passing Legacy Search v1 requests and Authority Boost through to Flask.
  */
 
 import { NextResponse } from "next/server";
@@ -23,6 +23,7 @@ export async function POST(request) {
     const query = typeof body?.query === "string" ? body.query.trim() : ""; // Trim body query
     const topK = Number.isInteger(body?.top_k) ? body.top_k : DEFAULT_TOP_K; // If topK is in body use it, if not then use DEFAULT_TOP_K
     const authorityFilter = body?.authority_filter === true; // AUTHORITY BOOST (MAY GET RID OF AT SOME POINT)
+    const indexVersion = body?.index_version === "v1" ? "v1" : "v2";
 
     // Front-end HAS to provide a query in order to search backend
     if (!query) {
@@ -42,6 +43,7 @@ export async function POST(request) {
         query,
         top_k: topK,
         authority_filter: authorityFilter,
+        index_version: indexVersion,
       }),
       cache: "no-store",
     });

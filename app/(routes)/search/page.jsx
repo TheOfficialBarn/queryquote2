@@ -7,8 +7,8 @@
  * Prologue:
  * Search route UI for quote discovery with a search-first experience and quick filters.
  * 
- * Last updated: 2026-04-26 - Removed Top K selection so searches always load
- * Top 50 results with page state handled in the results view.
+ * Last updated: 2026-04-27 - Added a Legacy Search toggle so users can
+ * compare v1 against the default v2 search path from the frontend.
  */
 
 import { Suspense, useState } from "react";
@@ -34,22 +34,22 @@ const tickerQuotes = [
   '"Roads? Where we\'re going, we don\'t need roads."',
 ];
 
-// Authority Boost toggle (MAY GET RID OF SOON)
-function AuthorityFilterToggle({ enabled, onChange }) {
+// Renders landing-page binary search option toggles before the first request.
+function SearchOptionToggle({ enabled, onChange, label, description, enabledClassName }) {
   return (
     <button
       type="button"
       onClick={() => onChange(!enabled)}
       className={`mt-4 rounded-2xl border px-4 py-3 text-left transition-colors ${
         enabled
-          ? "border-emerald-300/60 bg-emerald-300/15 text-white"
+          ? enabledClassName
           : "border-white/15 bg-white/5 text-white/85 hover:bg-white/10"
       }`}
       aria-pressed={enabled}
     >
-      <span className="block text-sm font-semibold">Authority filter</span>
+      <span className="block text-sm font-semibold">{label}</span>
       <span className="mt-1 block text-xs text-white/70">
-        Boost movies with more Metacritic votes and lower sparse-review matches.
+        {description}
       </span>
     </button>
   );
@@ -59,6 +59,7 @@ function SearchLandingPage() {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [useAuthorityFilter, setUseAuthorityFilter] = useState(false);
+  const [useLegacySearch, setUseLegacySearch] = useState(false);
 
   async function handleSearch(event) {
     event.preventDefault();
@@ -72,6 +73,7 @@ function SearchLandingPage() {
       buildSearchResultsUrl({
         query: trimmedQuery,
         authorityFilter: useAuthorityFilter,
+        legacySearch: useLegacySearch,
       }),
     );
   }
@@ -143,11 +145,21 @@ function SearchLandingPage() {
                 Search
               </button>
             </div>
-            {/* Authority Boost Toggle */}
-            <div className="flex justify-center">
-              <AuthorityFilterToggle
+            {/* Search option toggles */}
+            <div className="flex flex-wrap justify-center gap-3">
+              <SearchOptionToggle
                 enabled={useAuthorityFilter}
                 onChange={setUseAuthorityFilter}
+                label="Authority filter"
+                description="Boost movies with more Metacritic votes and lower sparse-review matches."
+                enabledClassName="border-emerald-300/60 bg-emerald-300/15 text-white"
+              />
+              <SearchOptionToggle
+                enabled={useLegacySearch}
+                onChange={setUseLegacySearch}
+                label="Legacy Search"
+                description="Use the original v1 index instead of the default v2 search."
+                enabledClassName="border-amber-300/70 bg-amber-300/20 text-white"
               />
             </div>
           </form>
@@ -164,7 +176,8 @@ function SearchPageContent() {
   const initialQuery = searchParams.get("q") || "";
   const initialPage = normalizeSearchPage(searchParams.get("page"));
   const initialAuthorityFilter = searchParams.get("authority_filter") === "true";
-  const pageStateKey = `${initialQuery}-${initialAuthorityFilter}`;
+  const initialIndexVersion = searchParams.get("index_version") === "v1" ? "v1" : "v2";
+  const pageStateKey = `${initialQuery}-${initialAuthorityFilter}-${initialIndexVersion}`;
 
   if (initialQuery.trim()) {
     return (
@@ -174,6 +187,7 @@ function SearchPageContent() {
         initialQuery={initialQuery}
         initialPage={initialPage}
         initialAuthorityFilter={initialAuthorityFilter}
+        initialIndexVersion={initialIndexVersion}
       />
     );
   }
