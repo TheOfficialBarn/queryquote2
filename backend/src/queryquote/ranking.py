@@ -13,10 +13,10 @@ from __future__ import annotations
 
 
 def minmax_normalize(scores: dict[str, float]) -> dict[str, float]:
-    if not scores:
-        return {}
+    # Purpose: conevrt raw scores into a 0.0 - 1.0 range
+    if not scores: return {}
+
     vals = list(scores.values())
     lo, hi = min(vals), max(vals)
-    if hi - lo < 1e-12:
-        return {k: 0.0 for k in scores}
+    if hi - lo < 1e-12: return {k: 0.0 for k in scores}
     return {k: (v - lo) / (hi - lo) for k, v in scores.items()}

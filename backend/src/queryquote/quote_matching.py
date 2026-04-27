@@ -10,13 +10,19 @@ helpers after dropping the pickle backend.
 """
 
 from __future__ import annotations
-
 from difflib import SequenceMatcher
-
+# SequenceMatcher is a class that compares two sequences
+# and then estimates how similar they are. Most commonly,
+# those sequences are strings
+# It *REWARDS* near-identical wording, but is not vector-based/cosine-based
+# We chose this over cosine-similarity as quotes need semantic similarity
+# AND **ORDER** siimilarity, which this excels at.
 from .preprocessing import normalize_text
 
 
 def fuzzy_ratio(query_text: str, doc_text: str) -> float:
+    # Purpose: provide a shared FUZZY QUOTE SIMILARITY helper
+    # For both v1 and v2 search engines
     q = normalize_text(query_text)
     d = normalize_text(doc_text)
     if not q or not d:

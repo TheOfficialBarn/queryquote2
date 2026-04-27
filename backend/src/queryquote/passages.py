@@ -3,22 +3,27 @@ Authors: Aiden Barnard & Atharva Patil
 Class: EECS 767 IR (Class Project)
 
 Prologue:
-
+Turns raw transcript files into *SEARCHABLE PASSAGE CHUNKS*
 """
 from __future__ import annotations
-
 from pathlib import Path
-
 from .preprocessing import join_tokens, tokenize
 from .types import Passage
 
 
 def iter_transcript_files(data_dir: str | Path):
+    """
+    Finds every .txt transcript under a directory
+    """
     data_path = Path(data_dir)
-    yield from data_path.rglob("*.txt")
+    yield from data_path.rglob("*.txt")     # So if the corpus has nested folders,
+                                            # It still finds transcript files recursively
 
 
 def movie_id_from_filename(file_name: str) -> str:
+    """
+    Turns a transcript filename into a movie ID
+    """
     suffix = " - full transcript.txt"
     if file_name.endswith(suffix):
         return file_name[: -len(suffix)]
@@ -26,9 +31,14 @@ def movie_id_from_filename(file_name: str) -> str:
 
 
 def split_text_into_passages(raw_text: str, *, max_tokens: int, overlap: int) -> list[str]:
+    """
+    Splits one transcript into passage-sized chunks
+    """
+    # Below we keep stopwords. We do this because this function is
+    # Splitting text into readable passage windows to be displayed 
+    # in frontend, not doing search-term filtering
     tokens = tokenize(raw_text, remove_stopwords=False)
-    if not tokens:
-        return []
+    if not tokens: return []
 
     if max_tokens <= 0:
         raise ValueError("max_tokens must be > 0")
@@ -48,6 +58,14 @@ def split_text_into_passages(raw_text: str, *, max_tokens: int, overlap: int) ->
 
 
 def collect_passages(data_dir: str | Path, *, max_tokens: int, overlap: int) -> list[Passage]:
+    """
+    This is a convenience function that does the full passage collection
+    1. Find transcript files
+    2. Read each file
+    3. Derive movie_id
+    4. Split text into chunks
+    5. Wrap each chunk in a *PASSAGE* dataclass
+    """
     results: list[Passage] = []
     for path in iter_transcript_files(data_dir):
         text = path.read_text(encoding="utf-8", errors="ignore")

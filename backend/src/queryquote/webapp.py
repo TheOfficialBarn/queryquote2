@@ -255,8 +255,8 @@ def main() -> None:
     )
 
     # Development server entry point; production deployment should use a WSGI runner.
-    print(f"Starting server on http://{args.host}:{args.port}")
-    print("Press Ctrl+C to stop")
+    print(f"Starting QueryQuote search-engine server on http://{args.host}:{args.port}")
+    print("Press Ctrl+C to stop :)")
     app.run(host=args.host, port=args.port, debug=args.debug)
 
 
