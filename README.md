@@ -1,9 +1,27 @@
 <!--
+Authors: Aiden Barnard & Atharva Patil
+Class: EECS 767 (IR Project)
+
 Prologue:
 Project-level README for QueryQuote setup, architecture, and day-to-day usage.
+
 Last updated: 2026-04-27 - Updated backend launcher naming and documented the
 installed queryquote/queryquote-web CLI workflow.
 -->
+
+```text
+  /$$$$$$                                                 /$$$$$$                        /$$              
+ /$$__  $$                                               /$$__  $$                      | $$              
+| $$  \ $$ /$$   /$$  /$$$$$$   /$$$$$$  /$$   /$$      | $$  \ $$ /$$   /$$  /$$$$$$  /$$$$$$    /$$$$$$ 
+| $$  | $$| $$  | $$ /$$__  $$ /$$__  $$| $$  | $$      | $$  | $$| $$  | $$ /$$__  $$|_  $$_/   /$$__  $$
+| $$  | $$| $$  | $$| $$$$$$$$| $$  \__/| $$  | $$      | $$  | $$| $$  | $$| $$  \ $$  | $$    | $$$$$$$$
+| $$/$$ $$| $$  | $$| $$_____/| $$      | $$  | $$      | $$/$$ $$| $$  | $$| $$  | $$  | $$ /$$| $$_____/
+|  $$$$$$/|  $$$$$$/|  $$$$$$$| $$      |  $$$$$$$      |  $$$$$$/|  $$$$$$/|  $$$$$$/  |  $$$$/|  $$$$$$$
+ \____ $$$ \______/  \_______/|__/       \____  $$       \____ $$$ \______/  \______/    \___/   \_______/
+      \__/                               /$$  | $$            \__/                                        
+                                        |  $$$$$$/                                                        
+                                         \______/                                                         
+```
 
 # QueryQuote
 
@@ -226,26 +244,6 @@ queryquote search \
   --query "you can't handle the truth" \
   --top-k 50 \
   --authority-filter
-```
-
-## Verification
-
-Run the frontend linter:
-
-```bash
-npm run lint
-```
-
-Run backend tests:
-
-```bash
-python -m pytest backend/tests
-```
-
-Build the production frontend:
-
-```bash
-npm run build
 ```
 
 ## Notes
