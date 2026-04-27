@@ -5,23 +5,22 @@ Class: EECS 767 IR (Class Project)
 Prologue:
 Command-line entry points for building, searching, and evaluating QueryQuote indexes.
 
-Last updated: 2026-04-27 - Added short review comments explaining the CLI
-command handlers, backend selection, and parser setup.
+Last updated: 2026-04-27 - Added import comments explaining CLI parsing,
+JSON output, and command handler dependencies.
 """
 
 # **REMEMBER THE FRONT END DOES NOT USE THE CLI**
 # THIS IS MEANT FOR THE USER, PRIMARILY FOR BUILDING INDEXES
 # AND FOR TESTING SEARCH/EVALUATION W/O HAVING TO USE THE FRONTEND
 
-from __future__ import annotations
+from __future__ import annotations  # Keeps command handler type hints from affecting runtime imports.
+import argparse                     # Builds the queryquote command tree and parses subcommand options.
+import json                         # Emits search/evaluation results in machine-readable form when requested.
 
-import argparse
-import json
-
-from .config import DEFAULT_MAX_PASSAGE_TOKENS, DEFAULT_PASSAGE_OVERLAP, DEFAULT_TOP_K
-from .db_index import SQLiteSearchEngine, build_sqlite_index
-from .db_index_v2 import SQLiteSearchEngineV2, build_sqlite_index_v2
-from .evaluation import evaluate_run, load_qrels, load_queries
+from .config import DEFAULT_MAX_PASSAGE_TOKENS, DEFAULT_PASSAGE_OVERLAP, DEFAULT_TOP_K  # Shares CLI defaults with API/index builders.
+from .db_index import SQLiteSearchEngine, build_sqlite_index  # Runs legacy v1 build and search commands.
+from .db_index_v2 import SQLiteSearchEngineV2, build_sqlite_index_v2  # Runs v2 build and search commands.
+from .evaluation import evaluate_run, load_qrels, load_queries  # Loads test sets and computes IR metrics.
 
 
 def cmd_build(args: argparse.Namespace) -> None:

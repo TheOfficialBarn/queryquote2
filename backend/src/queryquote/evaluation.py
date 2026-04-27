@@ -3,15 +3,17 @@ Authors: Aiden Barnard & Atharva Patil
 Class: EECS 767 IR (Class Project)
 
 Prologue:
+Evaluation helpers for loading query/qrel JSONL files and computing IR metrics.
 
+Last updated: 2026-04-27 - Added import comments explaining metric math,
+JSONL loading, and qrel grouping dependencies.
 """
 
-from __future__ import annotations
-
-import json
-import math
-from collections import defaultdict
-from pathlib import Path
+from __future__ import annotations      # Keeps metric helper type hints lazy at runtime.
+import json                             # Parses query and qrel JSONL rows.
+import math                             # Computes logarithmic DCG gains for nDCG. (Discounted Cumulative Gain) "How useful was this reslut to user"
+from collections import defaultdict     # Groups qrel relevance judgments by query ID.
+from pathlib import Path                # Accepts string or Path inputs for evaluation files.
 
 
 def load_queries(path: str | Path) -> list[dict[str, str]]:

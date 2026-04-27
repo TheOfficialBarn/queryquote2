@@ -5,11 +5,11 @@ Class: EECS 767 IR (Class Project)
 Prologue:
 Shared score normalization helpers for SQLite-backed QueryQuote search.
 
-Last updated: 2026-04-27 - Removed deprecated in-memory BM25/TF-IDF helpers
-after dropping the pickle backend.
+Last updated: 2026-04-27 - Added import comments explaining the lightweight
+typing behavior used by shared ranking helpers.
 """
 
-from __future__ import annotations
+from __future__ import annotations  # Allows modern score-map annotations without runtime evaluation.
 
 
 def minmax_normalize(scores: dict[str, float]) -> dict[str, float]:

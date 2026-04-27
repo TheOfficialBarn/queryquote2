@@ -5,15 +5,15 @@ Class: EECS 767 IR (Class Project)
 Prologue:
 Version 2 text analyzer for quote-focused indexing.
 
-Last updated: 2026-04-27 - Added review comments explaining v2 normalization,
-contraction handling, and the split between full tokens and BM25 tokens.
+Last updated: 2026-04-27 - Added import comments explaining the regex,
+normalization, and token dataclass dependencies used by v2 analysis.
 """
 
-from __future__ import annotations
+from __future__ import annotations  # Defers annotation evaluation for compact type hints.
 
-import re
-import unicodedata
-from dataclasses import dataclass
+import re                           # Compiles tokenization and contraction cleanup patterns. (**REGEX**)
+import unicodedata                  # Normalizes diacritics so quote matching is accent-insensitive.
+from dataclasses import dataclass   # Defines immutable token expansion rules cleanly.
 
 
 # Common words removed only from the BM25 ranking stream.

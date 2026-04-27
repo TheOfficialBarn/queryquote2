@@ -5,42 +5,42 @@ Class: EECS 767 IR (Class Project)
 Prologue:
 SQLite v2 index builder and search engine for QueryQuote transcript experiments.
 
-Last updated: 2026-04-27 - Added multi-select decade and genre filtering where
-facet values union internally and intersect across groups.
+Last updated: 2026-04-27 - Added import comments explaining v2 indexing,
+authority metadata, reranking, facets, and transcript detail dependencies.
 """
 
-from __future__ import annotations
+from __future__ import annotations  # Defers annotations for fast import and forward references.
 
-import csv
-import heapq
-import json
-import math
-import sqlite3
-import time
-from collections import Counter, defaultdict
-from dataclasses import dataclass, field
-from pathlib import Path
+import csv                          # Reads **COMPACT_AUTHORITY.CSV** metadata while building the v2 movie table.
+import heapq                        # Pulls top BM25 candidates efficiently from large score maps.
+import json                         # Stores and reads posting-position arrays in SQLite.
+import math                         # Computes BM25 IDF and scoring math.
+import sqlite3                      # Persists v2 movies, passages, postings, and facet metadata.
+import time                         # Records query timing diagnostics.
+from collections import Counter, defaultdict  # Counts query terms and accumulates BM25 scores.
+from dataclasses import dataclass, field  # Defines authority records, matches, and timing log state.
+from pathlib import Path            # Resolves index, CSV, transcript, and log paths.
 
-from .analyzer_v2 import full_tokenize_v2, is_bm25_term
+from .analyzer_v2 import full_tokenize_v2, is_bm25_term  # Produces full quote tokens and filtered BM25 terms.
 from .authority import (
-    authority_multiplier,
-    normalize_title,
-    parse_release_year,
-    parse_title_year,
-    parse_vote_count,
-    split_movie_id,
+    authority_multiplier,           # Converts Metacritic vote counts into bounded score multipliers.
+    normalize_title,                # Aligns transcript IDs with authority CSV titles.
+    parse_release_year,             # Pulls release years from CSV dates.
+    parse_title_year,               # Pulls years embedded in CSV titles.
+    parse_vote_count,               # Converts CSV vote-count strings to integers.
+    split_movie_id,                 # Splits transcript movie IDs into title/year pieces.
 )
-from .config import DEFAULT_MAX_PASSAGE_TOKENS, DEFAULT_PASSAGE_OVERLAP, DEFAULT_TOP_K
-from .passages import iter_transcript_files, movie_id_from_filename
-from .quote_matching import fuzzy_ratio
-from .ranking import minmax_normalize
+from .config import DEFAULT_MAX_PASSAGE_TOKENS, DEFAULT_PASSAGE_OVERLAP, DEFAULT_TOP_K  # Shares build/search defaults with CLI and API.
+from .passages import iter_transcript_files, movie_id_from_filename  # Discovers transcript sources and derives stable movie IDs.
+from .quote_matching import fuzzy_ratio  # Adds fuzzy quote similarity during reranking.
+from .ranking import minmax_normalize  # Normalizes BM25 scores before rerank boosts.
 from .transcript_access import (
-    bounded_transcript_limit,
-    escape_sql_like,
-    read_transcript_source,
-    split_authority_genres,
+    bounded_transcript_limit,       # Clamps transcript browser result limits.
+    escape_sql_like,                # Escapes user filter text used with SQLite LIKE.
+    read_transcript_source,         # Opens full transcript files for detail pages.
+    split_authority_genres,         # Converts stored comma-separated genres into API lists.
 )
-from .types import SearchResult, TranscriptDetail, TranscriptMovie
+from .types import SearchResult, TranscriptDetail, TranscriptMovie  # Shares API-facing result and transcript data shapes.
 
 
 DEFAULT_AUTHORITY_COMPACT_CSV_PATH = Path(__file__).resolve().parents[2] / "authority_compact.csv"

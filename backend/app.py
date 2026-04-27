@@ -1,25 +1,22 @@
 #!/usr/bin/env python3
 """Prologue:
 Quick launcher for the QueryQuote API server.
-Last updated: 2026-04-27 - Renamed from run_web.py to app.py; the installed
-queryquote-web command remains the preferred way to start the API.
+Last updated: 2026-04-27 - Added import comments explaining the launcher-only
+dependencies used to start the local Flask API.
 """
 
-from __future__ import annotations
-
-import sys
-from pathlib import Path
+from __future__ import annotations          # Keep type hints lazy so this launcher stays compatible across supported Python versions.
+import sys                                  # Lets the launcher prepend backend/src before importing the package.
+from pathlib import Path                    # Builds portable paths to the local src package and index directories.
+from queryquote.webapp import create_app    # Constructs the Flask API with the requested search indexes.
+import argparse                             # Parses local server flags without loading CLI-only code at module import time.
 
 # Add src to path so we can import queryquote
 src_path = Path(__file__).parent / "src"
 sys.path.insert(0, str(src_path))
 
-from queryquote.webapp import create_app
-
-
 def main() -> None:
     """Run the API server."""
-    import argparse
 
     parser = argparse.ArgumentParser(
         description="Launch QueryQuote API Server",

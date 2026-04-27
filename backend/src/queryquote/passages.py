@@ -5,13 +5,13 @@ Class: EECS 767 IR (Class Project)
 Prologue:
 Turns raw transcript files into *SEARCHABLE PASSAGE CHUNKS*
 
-Last updated: 2026-04-27 - Updated passage splitting to import v1 tokenizer
-helpers from analyzer_v1 after the preprocessing module rename.
+Last updated: 2026-04-27 - Added import comments explaining transcript path,
+tokenization, and passage data-shape dependencies.
 """
-from __future__ import annotations
-from pathlib import Path
-from .analyzer_v1 import join_tokens, tokenize
-from .types import Passage
+from __future__ import annotations              # Defers annotations for path-like type hints.
+from pathlib import Path                        # Recursively discovers transcript files and parses filenames.
+from .analyzer_v1 import join_tokens, tokenize  # Splits raw transcript text into readable token windows.
+from .types import Passage                      # Packages indexed passage metadata for callers.
 
 
 def iter_transcript_files(data_dir: str | Path):

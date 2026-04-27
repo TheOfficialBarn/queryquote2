@@ -4,11 +4,11 @@ Class: EECS 767 IR (Class Project)
 
 Prologue:
 Regression coverage for authority vote-count parsing and movie matching.
-Last updated: 2026-04-25 - Added tests proving sparse-vote movies are
-penalized, high-vote movies are boosted, and missing movies stay unadjusted.
+Last updated: 2026-04-27 - Added import comments explaining the authority
+index builder dependency under test.
 """
 
-from queryquote.authority import build_authority_index
+from queryquote.authority import build_authority_index  # Builds in-memory authority indexes for multiplier assertions.
 
 
 def test_authority_index_maps_votes_to_bounded_movie_multipliers():

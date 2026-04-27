@@ -5,33 +5,35 @@ Class: EECS 767 IR (Class Project)
 Prologue:
 SQLite-backed indexing and search for large QueryQuote transcript corpora.
 
-Last updated: 2026-04-27 - Updated transcript filter signatures for
-multi-select decade and genre facets while preserving v1-compatible metadata.
+Last updated: 2026-04-27 - Added import comments explaining v1 indexing,
+ranking, transcript lookup, and shared result-shape dependencies.
 """
 
-from __future__ import annotations
+# (V1 WILL EVENTAULLY BE DEPRECATED IN FAVOR OF DATA2_INTERSECTION ONCE IT'S COMPLETE)
 
-from dataclasses import dataclass, field
-import heapq
-import json
-import math
-import sqlite3
-import time
-from collections import Counter, defaultdict
-from pathlib import Path
+from __future__ import annotations          # Defers type annotations for a safer module import.
 
-from .authority import AuthorityIndex, load_default_authority_index, split_movie_id
-from .config import DEFAULT_TOP_K
-from .passages import iter_transcript_files, movie_id_from_filename, split_text_into_passages
-from .analyzer_v1 import tokenize
-from .quote_matching import fuzzy_ratio
-from .ranking import minmax_normalize
+from dataclasses import dataclass, field    # Defines timing log state and gives it a safe default list.
+import heapq                                # Selects top scoring passages without sorting every candidate.
+import json                                 # Stores and reads token position postings as compact JSON arrays.
+import math                                 # Computes BM25 IDF and logarithmic scoring pieces.
+import sqlite3                              # Persists the legacy v1 inverted index and passage metadata. 
+import time                                 # Measures query phases for local timing diagnostics.
+from collections import Counter, defaultdict  # Counts query terms and accumulates sparse score maps.
+from pathlib import Path                    # Resolves index paths, source files, and timing log locations.
+
+from .authority import AuthorityIndex, load_default_authority_index, split_movie_id  # Applies optional movie authority boosts and parses movie IDs.
+from .config import DEFAULT_TOP_K           # Shares the API/CLI default result count.
+from .passages import iter_transcript_files, movie_id_from_filename, split_text_into_passages  # Discovers transcript files and builds readable passage windows.
+from .analyzer_v1 import tokenize           # Produces legacy search tokens for v1 indexing and querying.
+from .quote_matching import fuzzy_ratio     # Adds quote-like wording similarity during reranking.
+from .ranking import minmax_normalize       # Normalizes BM25 scores before rerank boosts.
 from .transcript_access import (
-    bounded_transcript_limit,
-    escape_sql_like,
-    read_transcript_source,
+    bounded_transcript_limit,               # Clamps transcript browser result limits.
+    escape_sql_like,                        # Safely searches movie IDs with SQLite LIKE.
+    read_transcript_source,                 # Opens full transcript files for detail pages.
 )
-from .types import SearchResult, TranscriptDetail, TranscriptMovie
+from .types import SearchResult, TranscriptDetail, TranscriptMovie  # Shares API-facing result and transcript data shapes.
 
 
 DEFAULT_TIMING_LOG_PATH = Path(__file__).resolve().parents[3] / "test" / "time-logs" / "times-v1.txt"

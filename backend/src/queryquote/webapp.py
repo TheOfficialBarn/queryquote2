@@ -5,26 +5,24 @@ Class: EECS 767 IR (Class Project)
 Prologue:
 API-only Flask application for QueryQuote search endpoints.
 
-Last updated: 2026-04-27 - Added multi-select decade and genre transcript
-filters with union-within-facet and intersection-across-facets behavior.
+Last updated: 2026-04-27 - Added import comments explaining Flask routing,
+index loading, transcript filters, and response shape dependencies.
 """
 
-from __future__ import annotations
+from __future__ import annotations                      # Defers annotations for Flask app factory type hints.
+import argparse                                         # Allows for **PARSING** queryquote-web server options.
+from pathlib import Path                                # Validates index directories before startup.
 
-import argparse
-from pathlib import Path
-
-from flask import Flask, jsonify, request
-
-from .config import DEFAULT_TOP_K
-from .db_index import SQLiteSearchEngine
-from .db_index_v2 import SQLiteSearchEngineV2
+from flask import Flask, jsonify, request               # Provides API routing, JSON responses, and request parsing.
+from .config import DEFAULT_TOP_K                       # Shares the default search result count with CLI/front-end proxy.
+from .db_index import SQLiteSearchEngine                # Loads and serves the legacy v1 SQLite index.
+from .db_index_v2 import SQLiteSearchEngineV2           # Loads and serves the v2 SQLite index.
 from .transcript_access import (
-    bounded_transcript_limit,
-    normalized_transcript_decades,
-    normalized_transcript_genres,
+    bounded_transcript_limit,                           # Clamps transcript browser result limits.
+    normalized_transcript_decades,                      # Normalizes repeated decade query parameters.
+    normalized_transcript_genres,                       # Normalizes repeated genre query parameters.
 )
-from .types import TranscriptDetail, TranscriptMovie
+from .types import TranscriptDetail, TranscriptMovie    # Serializes transcript browser dataclasses to JSON.
 
 
 def create_app(

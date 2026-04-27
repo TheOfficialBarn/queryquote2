@@ -6,13 +6,12 @@ Prologue:
 Shared helpers for transcript browser lookup, limit handling, and source-file
 resolution across SQLite index versions.
 
-Last updated: 2026-04-27 - Added multi-select genre and decade helpers for
-transcript browser filters backed by the authority metadata in the v2 index.
+Last updated: 2026-04-27 - Added import comments explaining filesystem path
+resolution used by transcript browser helpers.
 """
 
-from __future__ import annotations
-
-from pathlib import Path
+from __future__ import annotations  # Keeps helper type hints lazy at import time.
+from pathlib import Path            # Resolves repo/backend roots and transcript source files.
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]

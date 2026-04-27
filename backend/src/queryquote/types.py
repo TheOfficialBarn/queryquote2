@@ -7,11 +7,11 @@ This file is the shared "data shape" file for QueryQuote.
 It defines small dataclasses that other modules pass around.
 This is what we use instead of loose dictionaries or tuples
 
-Last updated: 2026-04-27 - Added genre metadata to transcript browser shapes
-so the frontend can filter and display Metacritic categories.
+Last updated: 2026-04-27 - Added import comments explaining dataclass and lazy
+annotation dependencies used by shared API shapes.
 """
-from __future__ import annotations
-from dataclasses import dataclass
+from __future__ import annotations  # Supports modern nested type hints without runtime evaluation.
+from dataclasses import dataclass   # Defines compact structured records instead of loose dictionaries.
 
 
 @dataclass(slots=True)

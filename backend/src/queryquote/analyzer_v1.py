@@ -5,15 +5,15 @@ Class: EECS 767 IR (Class Project)
 Prologue:
 Version 1 text analyzer for basic QueryQuote normalization and tokenization.
 
-Last updated: 2026-04-27 - Renamed the old preprocessing helpers into the v1
-analyzer module so v1 and v2 text analysis use matching module names.
+Last updated: 2026-04-27 - Added import comments explaining the normalization
+and typing helpers used by the v1 analyzer.
 """
 
-from __future__ import annotations
+from __future__ import annotations  # Defers annotation evaluation for lightweight type hints.
 
-import re
-import unicodedata
-from collections.abc import Iterable
+import re                               # Compiles punctuation and whitespace cleanup patterns. (**REGEX**)
+import unicodedata                      # Strips accents/diacritics during normalization.
+from collections.abc import Iterable    # Types token streams accepted by join_tokens.
 
 
 # Common words removed during search/index tokenization when remove_stopwords=True.

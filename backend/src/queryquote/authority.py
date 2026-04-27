@@ -5,20 +5,20 @@ Class: EECS 767 IR (Class Project)
 Prologue:
 CSV-backed authority scoring for opt-in movie ranking adjustments.
 
-Last updated: 2026-04-27 - Added review comments explaining authority CSV
-loading, title/year matching, vote multipliers, and cache behavior.
+Last updated: 2026-04-27 - Added import comments explaining CSV parsing,
+title normalization, cached loading, and authority record typing dependencies.
 """
 
-from __future__ import annotations
+from __future__ import annotations  # Allows forward-looking type hints without runtime overhead.
 
-import csv
-import math
-import re
-import unicodedata
-from dataclasses import dataclass
-from functools import lru_cache
-from pathlib import Path
-from typing import Iterable
+import csv                          # Reads Metacritic authority rows from authority_compact.csv.
+import math                         # Computes bounded log-scaled vote multipliers.
+import re                           # Extracts years and strips title qualifiers for matching. (**REGEX**)
+import unicodedata                  # Normalizes titles across accents and punctuation variants.
+from dataclasses import dataclass   # Stores authority records and lookup indexes as explicit shapes.
+from functools import lru_cache     # Caches the default authority index so searches do not reread CSV.
+from pathlib import Path            # Resolves the repository-local authority CSV path.
+from typing import Iterable         # Types caller-supplied authority row collections.
 
 
 DEFAULT_AUTHORITY_CSV_PATH = Path(__file__).resolve().parents[2] / "authority_compact.csv"

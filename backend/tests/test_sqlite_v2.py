@@ -4,13 +4,13 @@ Class: EECS 767 IR (Class Project)
 
 Prologue:
 Regression coverage for v1/v2 SQLite backend selection and v2 search.
-Last updated: 2026-04-27 - Added transcript browser coverage for multi-select
-facet unions inside decade/genre groups and intersections across groups.
+Last updated: 2026-04-27 - Added import comments explaining the index builders
+and Flask app factory exercised by backend regression tests.
 """
 
-from queryquote.db_index import build_sqlite_index
-from queryquote.db_index_v2 import build_sqlite_index_v2
-from queryquote.webapp import create_app
+from queryquote.db_index import build_sqlite_index          # Builds a temporary v1 index for selection tests.
+from queryquote.db_index_v2 import build_sqlite_index_v2    # Builds temporary v2 indexes for search/filter tests.
+from queryquote.webapp import create_app                    # Creates Flask test clients without starting a server.
 
 
 def _write_transcript(data_dir, movie_id: str, text: str) -> None:
