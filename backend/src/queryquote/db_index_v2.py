@@ -1,7 +1,7 @@
 """Prologue:
 SQLite v2 index builder and search engine for QueryQuote transcript experiments.
-Last updated: 2026-04-27 - Added a queryable v2 search engine with textv2
-timing logs so v1 and v2 indexes can be compared from the backend.
+Last updated: 2026-04-27 - Added relaxed content-phrase scoring to the default
+v2 reranker so source passages survive small wording and stopword differences.
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ from .types import SearchResult
 
 
 DEFAULT_AUTHORITY_COMPACT_CSV_PATH = Path(__file__).resolve().parents[2] / "authority_compact.csv"
-DEFAULT_TIMING_LOG_PATH_V2 = Path(__file__).resolve().parents[2] / "textv2.txt"
+DEFAULT_TIMING_LOG_PATH_V2 = Path(__file__).resolve().parents[3] / "test" / "time-logs" / "times-v2.txt"
 SCHEMA_VERSION = "2"
 CORPUS_MODES = ("all", "intersection", "rest")
 _ARTICLES = {"a", "an", "the"}
@@ -47,6 +47,9 @@ MAX_EXACT_PHRASE_TERMS = 12
 FALLBACK_SEED_TERMS = 3
 EXACT_PHRASE_BOOST = 1.85
 EXACT_PHRASE_BASE_WEIGHT = 0.10
+RELAXED_PHRASE_BOOST = 1.05
+RELAXED_PROXIMITY_BOOST = 0.45
+RELAXED_COVERAGE_BOOST = 0.15
 PROXIMITY_BOOST = 0.55
 COVERAGE_BOOST = 0.20
 FUZZY_BOOST = 0.15
@@ -726,6 +729,56 @@ def _proximity_score_from_positions(
     return window / best_span
 
 
+def _ordered_proximity_score_from_positions(
+    query_terms: list[str],
+    positions_by_term: dict[str, list[int]],
+    *,
+    window: int = 12,
+) -> float:
+    if len(query_terms) < 2:
+        return 0.0
+    if any(term not in positions_by_term for term in query_terms):
+        return 0.0
+
+    best_span: int | None = None
+    for start_position in positions_by_term[query_terms[0]]:
+        current_position = start_position
+        matched = True
+        for term in query_terms[1:]:
+            next_position = _first_position_after(
+                positions_by_term[term],
+                current_position,
+            )
+            if next_position is None:
+                matched = False
+                break
+            current_position = next_position
+
+        if not matched:
+            continue
+
+        span = current_position - start_position + 1
+        if best_span is None or span < best_span:
+            best_span = span
+
+    if best_span is None:
+        return 0.0
+
+    ideal_span = len(query_terms)
+    if best_span <= ideal_span:
+        return 1.0
+    if best_span <= window:
+        return ideal_span / best_span
+    return window / best_span
+
+
+def _first_position_after(positions: list[int], current_position: int) -> int | None:
+    for position in positions:
+        if position > current_position:
+            return position
+    return None
+
+
 def _query_term_coverage(
     query_terms: list[str],
     positions_by_term: dict[str, list[int]],
@@ -743,6 +796,10 @@ def _positions_from_tokens(tokens: list[str], terms: set[str]) -> dict[str, list
         if term in terms:
             positions[term].append(position)
     return positions
+
+
+def _content_terms_from_tokens(tokens: list[str]) -> list[str]:
+    return [term for term in tokens if is_bm25_term(term)]
 
 
 def _select_bm25_seed_terms(term_stats: dict[str, tuple[int, float, int]]) -> list[str]:
@@ -1026,6 +1083,7 @@ class SQLiteSearchEngineV2:
         started_at = time.perf_counter()
         query_full_terms = full_tokenize_v2(query)
         query_bm25_terms = [term for term in query_full_terms if is_bm25_term(term)]
+        query_relaxed_terms = _content_terms_from_tokens(query_full_terms)
         _record_timing_v2(timing, "Tokenize query", started_at)
 
         started_at = time.perf_counter()
@@ -1108,9 +1166,38 @@ class SQLiteSearchEngineV2:
             _, movie_id, _, text = info
             passage_tokens = full_tokenize_v2(text)
             positions = _positions_from_tokens(passage_tokens, query_term_set)
-            phrase = 1.0 if _has_exact_phrase_from_positions(query_full_terms, positions) else 0.0
+            phrase = (
+                1.0
+                if _has_exact_phrase_from_positions(query_full_terms, positions)
+                else 0.0
+            )
             proximity = _proximity_score_from_positions(query_full_terms, positions)
             coverage = _query_term_coverage(query_full_terms, positions)
+            relaxed_phrase = 0.0
+            relaxed_proximity = 0.0
+            relaxed_coverage = 0.0
+            if query_relaxed_terms:
+                passage_content_terms = _content_terms_from_tokens(passage_tokens)
+                relaxed_positions = _positions_from_tokens(
+                    passage_content_terms,
+                    set(query_relaxed_terms),
+                )
+                relaxed_phrase = (
+                    1.0
+                    if _has_exact_phrase_from_positions(
+                        query_relaxed_terms,
+                        relaxed_positions,
+                    )
+                    else 0.0
+                )
+                relaxed_proximity = _ordered_proximity_score_from_positions(
+                    query_relaxed_terms,
+                    relaxed_positions,
+                )
+                relaxed_coverage = _query_term_coverage(
+                    query_relaxed_terms,
+                    relaxed_positions,
+                )
             fuzz = fuzzy_ratio(query, text)
 
             if phrase:
@@ -1123,6 +1210,9 @@ class SQLiteSearchEngineV2:
 
             base_scores[passage_id] += (
                 EXACT_PHRASE_BOOST * phrase
+                + RELAXED_PHRASE_BOOST * relaxed_phrase
+                + RELAXED_PROXIMITY_BOOST * relaxed_proximity
+                + RELAXED_COVERAGE_BOOST * relaxed_coverage
                 + PROXIMITY_BOOST * proximity
                 + COVERAGE_BOOST * coverage
                 + FUZZY_BOOST * fuzz

@@ -24,7 +24,7 @@ from .ranking import minmax_normalize
 from .types import SearchResult
 
 
-DEFAULT_TIMING_LOG_PATH = Path(__file__).resolve().parents[2] / "time.txt"
+DEFAULT_TIMING_LOG_PATH = Path(__file__).resolve().parents[3] / "test" / "time-logs" / "times-v1.txt"
 MAX_BM25_CANDIDATES = 10000
 RERANK_POOL_SIZE = 500
 MAX_SEED_TERMS = 8

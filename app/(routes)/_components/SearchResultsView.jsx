@@ -202,7 +202,9 @@ function ResultCard({ result }) {
   return (
     <article className="rounded-2xl border border-white/15 bg-black/35 p-4 sm:p-5">
       <p className="text-xs text-blue-300/80">Score: {scoreLabel}</p>
-      <h2 className="mt-1 text-xl text-blue-300">{result.movie_id}</h2>
+      {/* Regex in .replace() removes the underscores leftover from tokenization */}
+      {/* However, it is an underscore before "S" it turns into an apostrophe */}
+      <h2 className="mt-1 text-xl text-blue-300">{result.movie_id.replace(/_s\b/g, "'s").replace(/_/g,"")}</h2>
       <p className="mt-2 text-sm text-white/80">{result.snippet}</p>
       <p className="mt-3 break-all text-xs text-white/55">Source: {result.source_file}</p>
     </article>
@@ -267,34 +269,7 @@ function QueryDurationText({ durationMs }) {
 
 // Renders the right-side search metadata panel that summarizes the current
 // query, result count, requested count, page, index version, and boost state.
-function KnowledgePanel({ query, count, currentPage, authorityFilter, indexVersion }) {
-  const isLegacySearch = indexVersion === "v1";
 
-  return (
-    <aside className="rounded-2xl border border-white/15 bg-black/40 p-5">
-      <h3 className={`${movieFont.className} text-3xl`}>
-        <span className="bg-linear-to-r from-blue-700 via-purple-700 to-indigo-800 bg-clip-text text-transparent">
-          QueryQuote
-        </span>
-      </h3>
-      <p className="mt-2 text-sm text-white/80">
-        Search settings and result metadata for the current quote lookup.
-      </p>
-      <div className="mt-4 space-y-2 text-sm">
-        <p className="text-white/90">Query: <span className="text-white">{query || "None"}</span></p>
-        <p className="text-white/90">Matches found: <span className="text-white">{count}</span></p>
-        <p className="text-white/90">Requested count: <span className="text-white">Top 50</span></p>
-        <p className="text-white/90">Page: <span className="text-white">{currentPage}</span></p>
-        <p className="text-white/90">
-          Search index: <span className="text-white">{isLegacySearch ? "Legacy v1" : "V2"}</span>
-        </p>
-        <p className="text-white/90">
-          Authority filter: <span className="text-white">{authorityFilter ? "On" : "Off"}</span>
-        </p>
-      </div>
-    </aside>
-  );
-}
 
 
 // Coordinates the search results experience by fetching results, tracking
@@ -462,15 +437,6 @@ export default function SearchResultsView({
               <ResultsEmptyState query={initialQuery} errorMessage={errorMessage} />
             ) : null}
           </div>
-        </div>
-        <div className="lg:pt-8">
-          <KnowledgePanel
-            query={initialQuery}
-            count={resultCount}
-            currentPage={currentPage}
-            authorityFilter={initialAuthorityFilter}
-            indexVersion={initialIndexVersion}
-          />
         </div>
       </section>
     </main>

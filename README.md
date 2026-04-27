@@ -1,36 +1,20 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+Oftentimes, there are movies with quotes which are more recognizable than the movie itself. Maybe one remembers a line from a movie that they watched and wishes to rewatch it. Maybe someone has never seen the film before, but wants to find it based on a quote.
 
-## Getting Started
+To solve this, we want to create an information retrieval system based on a movie database that we have in the movie-transcripts-59k folder.
 
-First, run the development server:
+We are also planning to implement a punctuation-agnostic semantic search feature and fuzzy matching to account for misquotes and misspellings.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+We plan to implement the following algorithms:
+a. Core retrieval (first-stage search)
+    i. Inverted index over transcript text (term → postings list of documents/segments)
+    ii. TF-IDF Vector Space + Cosine Similarity baseline ranking
+    iii. BM25 baseline ranking
+b. We will likely implement with passage indexing versus scene/utterance level
+c. Quote-specific matching
+    i. Phrase search / positional index
+    ii. Proximity scoring
+    iii. Fuzzy matching for misquotes
+d. Evaluation
+    i. MAP / MRR / nDCG@K + precision/recall style analysis
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+We figure that it would first need to go through some preprocessing (tokenization, normalization, stop word removal) and passage splitting.
