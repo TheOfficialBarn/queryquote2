@@ -4,10 +4,13 @@ Class: EECS 767 IR (Class Project)
 
 Prologue:
 Turns raw transcript files into *SEARCHABLE PASSAGE CHUNKS*
+
+Last updated: 2026-04-27 - Updated passage splitting to import v1 tokenizer
+helpers from analyzer_v1 after the preprocessing module rename.
 """
 from __future__ import annotations
 from pathlib import Path
-from .preprocessing import join_tokens, tokenize
+from .analyzer_v1 import join_tokens, tokenize
 from .types import Passage
 
 

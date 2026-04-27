@@ -5,8 +5,8 @@ Class: EECS 767 IR (Class Project)
 Prologue:
 Quote text similarity helpers shared by SQLite v1 and v2 reranking.
 
-Last updated: 2026-04-27 - Removed deprecated in-memory phrase/proximity
-helpers after dropping the pickle backend.
+Last updated: 2026-04-27 - Updated fuzzy matching to import normalization from
+analyzer_v1 after the preprocessing module rename.
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ from difflib import SequenceMatcher
 # It *REWARDS* near-identical wording, but is not vector-based/cosine-based
 # We chose this over cosine-similarity as quotes need semantic similarity
 # AND **ORDER** siimilarity, which this excels at.
-from .preprocessing import normalize_text
+from .analyzer_v1 import normalize_text
 
 
 def fuzzy_ratio(query_text: str, doc_text: str) -> float:

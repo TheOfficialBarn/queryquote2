@@ -5,9 +5,8 @@ Class: EECS 767 IR (Class Project)
 Prologue:
 Version 2 text analyzer for quote-focused indexing.
 
-Last updated: 2026-04-26 - Adds contraction expansion and separate full-token
-and BM25-token streams so phrase matching can keep stopwords while ranking can
-stay selective.
+Last updated: 2026-04-27 - Added review comments explaining v2 normalization,
+contraction handling, and the split between full tokens and BM25 tokens.
 """
 
 from __future__ import annotations
@@ -17,6 +16,8 @@ import unicodedata
 from dataclasses import dataclass
 
 
+# Common words removed only from the BM25 ranking stream.
+# Full-token phrase matching keeps these words because quotes often depend on them.
 BM25_STOPWORDS = {
     "a",
     "about",
@@ -87,9 +88,12 @@ BM25_STOPWORDS = {
     "yours",
 }
 
+# Normalize curly apostrophes/backticks before expanding contractions.
 _APOSTROPHES_RE = re.compile(r"[\u2018\u2019\u201b\u2032`]")
 _NON_ALNUM_RE = re.compile(r"[^a-z0-9\s]+")
 _WHITESPACE_RE = re.compile(r"\s+")
+
+# Irregular contractions and informal quote wording that suffix rules do not handle well.
 _SPECIAL_CONTRACTIONS = {
     "ain't": "am not",
     "can't": "can not",
@@ -104,6 +108,9 @@ _SPECIAL_CONTRACTIONS = {
     "won't": "will not",
     "y'all": "you all",
 }
+
+# Generic contraction endings. These run after special cases so words like "won't"
+# and "can't" get the intended expansion first.
 _CONTRACTION_SUFFIXES: tuple[tuple[re.Pattern[str], str], ...] = (
     (re.compile(r"\b([a-z]+)n't\b"), r"\1 not"),
     (re.compile(r"\b([a-z]+)'re\b"), r"\1 are"),
@@ -117,11 +124,14 @@ _CONTRACTION_SUFFIXES: tuple[tuple[re.Pattern[str], str], ...] = (
 
 @dataclass(frozen=True, slots=True)
 class AnalyzerTokens:
+    """Pair the full phrase stream with the filtered BM25 ranking stream."""
+
     full: list[str]
     bm25: list[str]
 
 
 def normalize_for_tokens(text: str) -> str:
+    """Lowercase, de-accent, expand contractions, and strip punctuation for v2."""
     normalized = unicodedata.normalize("NFKD", text)
     normalized = "".join(ch for ch in normalized if not unicodedata.combining(ch))
     normalized = _APOSTROPHES_RE.sub("'", normalized.lower())
@@ -131,15 +141,18 @@ def normalize_for_tokens(text: str) -> str:
 
 
 def full_tokenize_v2(text: str) -> list[str]:
+    """Return all normalized tokens for exact phrase and proximity matching."""
     normalized = normalize_for_tokens(text)
     return normalized.split(" ") if normalized else []
 
 
 def bm25_tokenize_v2(text: str) -> list[str]:
+    """Return only selective terms for BM25 candidate scoring."""
     return bm25_terms_from_full_tokens(full_tokenize_v2(text))
 
 
 def analyze_v2(text: str) -> AnalyzerTokens:
+    """Build both v2 token streams from one normalization pass."""
     full_tokens = full_tokenize_v2(text)
     return AnalyzerTokens(
         full=full_tokens,
@@ -148,14 +161,17 @@ def analyze_v2(text: str) -> AnalyzerTokens:
 
 
 def is_bm25_term(token: str) -> bool:
+    """Decide whether a token is useful enough for BM25 postings."""
     return bool(token) and token not in BM25_STOPWORDS
 
 
 def bm25_terms_from_full_tokens(tokens: list[str]) -> list[str]:
+    """Filter full tokens down to the BM25 ranking stream."""
     return [token for token in tokens if is_bm25_term(token)]
 
 
 def _expand_contractions(text: str) -> str:
+    """Expand special and suffix contractions before punctuation is removed."""
     for contraction, expansion in _SPECIAL_CONTRACTIONS.items():
         text = re.sub(rf"\b{re.escape(contraction)}\b", expansion, text)
 

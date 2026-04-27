@@ -1,15 +1,18 @@
+"use client";
+
 /**
  * Authors: Aiden Barnard & Atharva Patil
  * Assignment: 767 IR Project (Movie Dataset Search Engine)
- * 
+ *
  * Prologue:
- * Simplified implementation for the QueryQuote "How it Works" page.
- * The page is now driven by a few compact data structures and one shared section
- * renderer so the route stays easy to scan and update without repeated card markup.
- * 
- * Last updated: 2026-04-26 - Updated the request-flow copy to reflect fixed
- * Top 50 searches with paginated frontend results.
+ * QueryQuote "How it Works" page explaining the backend through course-note
+ * concepts, with separate V1 and V2 tabs for the two SQLite search pipelines.
+ *
+ * Last updated: 2026-04-27 - Restored the Query Quote title gradient while
+ * keeping the rest of the page on solid non-cyan brand colors.
  */
+
+import { useState } from "react";
 import { Jersey_10 } from "next/font/google";
 import RouteBackLink from "../_components/RouteBackLink";
 
@@ -18,207 +21,263 @@ const movieFont = Jersey_10({
   subsets: ["latin"],
 });
 
+const queryQuoteTitleColor = "bg-linear-to-r from-blue-700 via-purple-700 to-indigo-800 bg-clip-text text-transparent";
+
 const overviewItems = [
-  ["Frontend", "Next.js 16 App Router, React 19, Tailwind CSS 4"],
-  ["Backend API", "Python 3.10+ with Flask"],
-  ["Search Storage", "SQLite index for large corpora, pickle bundle as a legacy option"],
-  ["Ranking", "BM25, TF-IDF cosine similarity, and quote-aware reranking"],
+  ["IR Architecture", "Document processing, indexing, query processing, ranking"],
+  ["Core Retrieval", "Inverted index, postings, term frequency, document frequency, BM25"],
+  ["Quote Matching", "Positions, exact phrases, proximity windows, fuzzy string matching"],
+  ["Evaluation", "Qrels, Precision@K, Recall@K, MAP, MRR, nDCG"],
 ];
 
-const sections = [
+const sharedConcepts = [
   {
-    title: "Tech Stack",
-    columns: "md:grid-cols-2",
-    items: [
-      {
-        title: "Frontend",
-        body:
-          "The web app runs on Next.js 16 with the App Router and React 19. Styling is handled with Tailwind CSS 4, and the current UI uses custom typography plus a shared global background defined in the root layout.",
-      },
-      {
-        title: "Backend",
-        body:
-          "The search API is a Flask service packaged as a Python project. It exposes health and search endpoints and can load either the SQLite-backed index or the legacy pickle bundle, depending on how the index was built.",
-      },
-    ],
+    title: "Document Processing",
+    note: "Lecture 6 IR systems + Lecture 5 text algorithms",
+    body:
+      "The backend treats transcript files as the document collection, normalizes text, tokenizes it, and splits each movie into overlapping passage windows before indexing.",
   },
   {
-    title: "Implementation Pipeline",
-    columns: "md:grid-cols-2 xl:grid-cols-3",
-    items: [
-      {
-        title: "1. Transcript ingestion",
-        body:
-          "Raw movie transcript files are collected and split into overlapping passages so the engine can rank smaller quote-sized chunks instead of entire files.",
-      },
-      {
-        title: "2. Text normalization",
-        body:
-          "Both transcripts and user queries are tokenized and normalized to improve matching when punctuation is missing, remembered loosely, or written slightly differently.",
-      },
-      {
-        title: "3. Index building",
-        body:
-          "QueryQuote builds an inverted positional index. Each term points to the passages where it appears, along with term frequency and token positions for phrase and proximity checks.",
-      },
-      {
-        title: "4. Lexical retrieval",
-        body:
-          "At query time, the engine gathers candidate passages, scores them with BM25 and TF-IDF cosine similarity, and normalizes those scores into a shared range.",
-      },
-      {
-        title: "5. Quote-aware reranking",
-        body:
-          "The strongest lexical candidates are reranked with exact phrase detection, proximity scoring, and fuzzy matching so misquotes and near-matches still surface useful results.",
-      },
-      {
-        title: "6. UI delivery",
-        body:
-          "The Next.js frontend submits a search request to an internal API route, which proxies the request to Flask and returns JSON results back to the browser UI.",
-      },
-    ],
+    title: "Inverted Index",
+    note: "Lecture 3 Boolean retrieval",
+    body:
+      "Both SQLite engines store term-to-passage postings instead of scanning every transcript at query time. Postings include term frequency and token positions.",
   },
   {
-    title: "How Search Is Implemented",
-    columns: "lg:grid-cols-3",
-    items: [
-      {
-        title: "Passage indexing",
-        body:
-          "Instead of indexing one full transcript as one document, QueryQuote splits each movie into sliding passages. That improves recall for short lines and keeps the ranking focused on the most relevant quote-sized region.",
-      },
-      {
-        title: "Hybrid scoring",
-        body:
-          "The retrieval layer combines BM25 and TF-IDF cosine similarity using weighted score blending. That gives the system a strong lexical baseline before any quote-specific heuristics are applied.",
-      },
-      {
-        title: "Quote reranking",
-        body:
-          "The final reranking stage checks whether the exact phrase appears, how tightly the query terms occur together, and how similar the remembered quote is to the original text using fuzzy matching.",
-      },
-    ],
+    title: "BM25 Ranking",
+    note: "Lecture 4 VSM + BM25",
+    body:
+      "Candidate passages are scored with BM25-style IDF, term-frequency saturation, and document-length normalization. BM25 is the lexical retrieval baseline.",
   },
   {
-    title: "Request Flow",
-    columns: "md:grid-cols-4",
-    items: [
-      { body: "The user types a quote into /search; the UI requests Top 50 results and paginates them into two pages." },
-      { body: "The browser sends the request to /api/search inside the Next.js app." },
-      { body: "The Next.js route forwards the request to the Flask backend at /api/search." },
-      { body: "Flask runs the search engine and returns ranked passages back to the UI." },
-    ],
+    title: "Proximity Search",
+    note: "Lecture 5 text algorithms",
+    body:
+      "Because quotes depend on word order and closeness, the backend stores positions and gives extra score when query terms appear in a tight window.",
   },
   {
-    title: "Code Map",
-    columns: "lg:grid-cols-2",
-    items: [
-      {
-        title: "Frontend routes",
-        list: [
-          "/app/(home)/page.jsx for the landing page",
-          "/app/(routes)/search/page.jsx for the search experience",
-          "/app/(routes)/how/page.jsx for this implementation guide",
-          "/app/api/search/route.js for the server-side proxy between Next.js and Flask",
-        ],
-      },
-      {
-        title: "Backend search core",
-        list: [
-          "/backend/src/queryquote/passages.py for transcript collection and passage splitting",
-          "/backend/src/queryquote/preprocessing.py for tokenization and normalization",
-          "/backend/src/queryquote/indexing.py for the in-memory index bundle",
-          "/backend/src/queryquote/db_index.py for SQLite index build and search",
-          "/backend/src/queryquote/search_engine.py for lexical scoring and reranking",
-          "/backend/src/queryquote/quote_matching.py for phrase, proximity, and fuzzy logic",
-          "/backend/src/queryquote/ranking.py for BM25, TF-IDF, and score normalization",
-          "/backend/src/queryquote/webapp.py for Flask API endpoints",
-        ],
-      },
-    ],
+    title: "Authority Signal",
+    note: "Lecture 4 authority scores + Lecture 9 authority/trust",
+    body:
+      "The optional authority filter uses vote counts as a query-independent movie-quality signal. It is not PageRank, but it applies the same idea that relevance alone is not always enough.",
   },
   {
-    title: "Current State",
-    columns: "md:grid-cols-2",
-    items: [
-      {
-        title: "Already implemented",
-        body:
-          "The current project already includes index building, a reusable search engine, a Flask API, a Next.js proxy route, and a working quote-search interface in the browser.",
-      },
-      {
-        title: "Why this architecture",
-        body:
-          "The split between Next.js and Flask keeps the frontend flexible while the retrieval logic stays isolated in Python, which is where the indexing, ranking, and evaluation tools already live.",
-      },
-    ],
+    title: "Evaluation",
+    note: "Lecture 2 evaluation",
+    body:
+      "The evaluation module loads queries and qrels, then reports Precision@K, Recall@K, MAP, MRR, and nDCG so ranking changes can be compared with measurable metrics.",
   },
 ];
 
-function renderCard(item, index) {
+const versionDetails = {
+  v1: {
+    label: "V1",
+    title: "SQLite V1: Basic Analyzer + Quote Reranking",
+    summary:
+      "V1 is the first SQLite search pipeline. It uses the v1 analyzer for lowercase/punctuation-normalized tokens, builds passage-level postings, retrieves with BM25, then reranks with quote-aware signals.",
+    rows: [
+      {
+        title: "Analyzer",
+        source: "Lecture 5 tokenization and normalization",
+        body:
+          "analyzer_v1.py lowercases text, removes punctuation/diacritics, splits on spaces, and removes common stopwords for search/index scoring. Passage splitting keeps stopwords so displayed text remains readable.",
+      },
+      {
+        title: "Index Structure",
+        source: "Lecture 3 term-document matrix -> inverted index",
+        body:
+          "db_index.py stores passages, document lengths, term stats, and postings. Each posting stores passage_id, term frequency, and positions for phrase/proximity scoring.",
+      },
+      {
+        title: "Ranking",
+        source: "Lecture 4 BM25 and candidate pruning",
+        body:
+          "Raw BM25 scores seed candidate passages. Scores are min-max normalized, then exact phrase, proximity, term coverage, fuzzy ratio, and optional authority boosts adjust final rank.",
+      },
+      {
+        title: "What It Avoids",
+        source: "Course tradeoff: lexical matching vs. semantic matching",
+        body:
+          "The backend does not rely on cosine similarity as the main quote matcher because quote search needs word order and closeness, not only vector overlap.",
+      },
+    ],
+  },
+  v2: {
+    label: "V2",
+    title: "SQLite V2: Split Token Streams + Stronger Recovery",
+    summary:
+      "V2 keeps the same IR foundation but separates phrase-matching tokens from BM25 ranking tokens, adds movie-level phrase postings, and stores authority metadata directly in the index.",
+    rows: [
+      {
+        title: "Analyzer",
+        source: "Lecture 5 linguistic preprocessing",
+        body:
+          "analyzer_v2.py expands contractions, normalizes apostrophes, keeps a full token stream for phrase checks, and filters a BM25 token stream for selective ranking terms.",
+      },
+      {
+        title: "Index Structure",
+        source: "Lecture 3 positional postings + Lecture 6 indexing pipeline",
+        body:
+          "db_index_v2.py stores movies, passages, passage stats, BM25 postings, movie phrase postings, and compact authority fields. Movie phrase postings help recover exact quotes that BM25 alone might miss.",
+      },
+      {
+        title: "Ranking",
+        source: "Lecture 8 retrieve -> rerank -> present",
+        body:
+          "V2 retrieves BM25 candidates, recovers exact phrase candidates, normalizes base scores, then reranks with exact phrase, relaxed content phrase, ordered proximity, coverage, fuzzy matching, and authority.",
+      },
+      {
+        title: "Corpus Experiments",
+        source: "Lecture 6 collection architecture",
+        body:
+          "V2 supports all, intersection, and rest corpus modes so experiments can compare transcripts with authority metadata against transcripts outside that matched set.",
+      },
+    ],
+  },
+};
+
+const codeMap = [
+  ["analyzer_v1.py", "V1 normalization, tokenization, and stopword filtering"],
+  ["analyzer_v2.py", "V2 contraction expansion plus full-token and BM25-token streams"],
+  ["passages.py", "Transcript discovery, movie IDs, and overlapping passage windows"],
+  ["db_index.py", "SQLite V1 index builder, BM25 retrieval, and quote reranking"],
+  ["db_index_v2.py", "SQLite V2 schema, authority metadata, phrase recovery, and reranking"],
+  ["authority.py", "Vote-count authority multipliers and title/year matching"],
+  ["evaluation.py", "Qrels and ranking metrics from the evaluation lecture"],
+  ["webapp.py", "Flask API that exposes health and search endpoints to the frontend"],
+];
+
+function ConceptCard({ item }) {
   return (
-    <article key={item.title ?? item.body ?? index} className="rounded-2xl border border-white/10 bg-white/5 p-5">
-      {item.title ? <h3 className="text-base font-semibold text-white">{item.title}</h3> : null}
-      {item.body ? (
-        <p className={`${item.title ? "mt-3" : ""} text-sm leading-7 text-white/78`}>{item.body}</p>
-      ) : null}
-      {item.list ? (
-        <ul className="mt-4 space-y-3 text-sm leading-7 text-white/78">
-          {item.list.map((entry) => (
-            <li key={entry}>{entry}</li>
-          ))}
-        </ul>
-      ) : null}
+    <article className="rounded-lg border border-white/10 bg-white/5 p-5">
+      <p className="text-xs uppercase tracking-[0.18em] text-purple-200/70">{item.note}</p>
+      <h3 className="mt-2 text-base font-semibold text-white">{item.title}</h3>
+      <p className="mt-3 text-sm leading-7 text-white/75">{item.body}</p>
     </article>
   );
 }
 
-export default function HowPage() {
+function VersionTab({ detail }) {
   return (
-    <main className="h-screen snap-y snap-mandatory overflow-y-auto px-6 py-8 md:px-8 md:py-10">
+    <div className="mt-6 grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
+      <div className="rounded-lg border border-purple-400/20 bg-indigo-500/10 p-5">
+        <p className="text-xs uppercase tracking-[0.22em] text-purple-100/70">{detail.label} pipeline</p>
+        <h3 className="mt-3 text-xl font-semibold text-white">{detail.title}</h3>
+        <p className="mt-4 text-sm leading-7 text-white/78">{detail.summary}</p>
+      </div>
+
+      <div className="grid gap-4">
+        {detail.rows.map((row) => (
+          <article key={row.title} className="rounded-lg border border-white/10 bg-black/25 p-5">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
+              <h4 className="text-base font-semibold text-white">{row.title}</h4>
+              <p className="text-xs uppercase tracking-[0.16em] text-white/45">{row.source}</p>
+            </div>
+            <p className="mt-3 text-sm leading-7 text-white/75">{row.body}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function HowPage() {
+  const [activeVersion, setActiveVersion] = useState("v1");
+  const activeDetail = versionDetails[activeVersion];
+
+  return (
+    <main className="min-h-screen overflow-y-auto px-6 py-8 md:px-8 md:py-10">
       <div className="mx-auto max-w-6xl">
         <RouteBackLink />
 
-        <div className="mt-10 grid min-h-[calc(100vh-8rem)] snap-end items-start gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-          <header className="max-w-3xl">
+        <header className="mt-10 grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+          <div>
             <p className="text-xs uppercase tracking-[0.3em] text-white/55">Inside QueryQuote</p>
             <h1 className={`${movieFont.className} mt-3 text-4xl tracking-wide text-white md:text-6xl`}>
-              How QueryQuote Works
+              How <span className={queryQuoteTitleColor}>Query Quote</span> Uses IR
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-white/78 md:text-base">
-              QueryQuote is a movie-quote search engine built to recover the right film even
-              when a user remembers only part of a line, drops punctuation, or misquotes the
-              wording. The system combines a Next.js frontend, a Flask API, and a retrieval
-              pipeline designed specifically for quote lookup.
+              The backend turns the final note-sheet concepts into a quote-search pipeline:
+              process documents, build positional inverted indexes, retrieve BM25 candidates,
+              rerank with quote-specific signals, and evaluate with qrels.
             </p>
-          </header>
+          </div>
 
-          <aside className="rounded-3xl border border-blue-400/20 bg-blue-500/10 p-6">
-            <p className="text-xs uppercase tracking-[0.25em] text-blue-200/75">At a glance</p>
-            <div className="mt-5 grid gap-4">
+          <aside className="rounded-lg border border-white/12 bg-black/35 p-5">
+            <p className="text-xs uppercase tracking-[0.25em] text-white/50">Cheat-sheet concepts used</p>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
               {overviewItems.map(([label, value]) => (
-                <div key={label} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/45">{label}</p>
-                  <p className="mt-2 text-sm leading-6 text-white/90">{value}</p>
+                <div key={label} className="rounded-lg border border-white/10 bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-white/45">{label}</p>
+                  <p className="mt-2 text-sm leading-6 text-white/88">{value}</p>
                 </div>
               ))}
             </div>
           </aside>
-        </div>
+        </header>
 
-        <div className="mt-8 grid gap-6">
-          {sections.map((section) => (
-            <section
-              key={section.title}
-              className="min-h-[calc(100vh-8rem)] snap-center rounded-3xl border border-white/12 bg-black/35 p-6 md:p-8"
-            >
-              <h2 className="text-xl font-semibold text-white/95">{section.title}</h2>
-              <div className={`mt-5 grid gap-4 ${section.columns}`}>
-                {section.items.map(renderCard)}
+        <section className="mt-10 rounded-lg border border-white/12 bg-black/35 p-6 md:p-8">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.22em] text-purple-200/70">Course notes to backend</p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">What From The Note Sheets Was Used</h2>
+            </div>
+            <p className="max-w-xl text-sm leading-7 text-white/65">
+              Concepts came mostly from Evaluation, Boolean retrieval, VSM/BM25, Text Algorithms,
+              IR Systems, Modern Web Search, and Link Analysis.
+            </p>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {sharedConcepts.map((item) => (
+              <ConceptCard key={item.title} item={item} />
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-8 rounded-lg border border-white/12 bg-black/35 p-6 md:p-8">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.22em] text-purple-200/70">Version comparison</p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">How V1 And V2 Use The Concepts</h2>
+            </div>
+
+            <div className="grid grid-cols-2 rounded-lg border border-white/10 bg-white/5 p-1">
+              {Object.entries(versionDetails).map(([key, detail]) => {
+                const isActive = key === activeVersion;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setActiveVersion(key)}
+                    className={`rounded-md px-5 py-2 text-sm font-semibold transition ${
+                      isActive
+                        ? "bg-purple-700 text-white"
+                        : "text-white/70 hover:bg-white/10 hover:text-white"
+                    }`}
+                  >
+                    {detail.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <VersionTab detail={activeDetail} />
+        </section>
+
+        <section className="mt-8 rounded-lg border border-white/12 bg-black/35 p-6 md:p-8">
+          <p className="text-xs uppercase tracking-[0.22em] text-purple-200/70">Implementation map</p>
+          <h2 className="mt-2 text-2xl font-semibold text-white">Where Those Ideas Live In Code</h2>
+          <div className="mt-6 grid gap-3 md:grid-cols-2">
+            {codeMap.map(([file, purpose]) => (
+              <div key={file} className="rounded-lg border border-white/10 bg-white/5 p-4">
+                <p className="font-mono text-sm text-purple-100">{file}</p>
+                <p className="mt-2 text-sm leading-6 text-white/75">{purpose}</p>
               </div>
-            </section>
-          ))}
-        </div>
+            ))}
+          </div>
+        </section>
       </div>
     </main>
   );

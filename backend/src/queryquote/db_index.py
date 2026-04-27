@@ -5,8 +5,8 @@ Class: EECS 767 IR (Class Project)
 Prologue:
 SQLite-backed indexing and search for large QueryQuote transcript corpora.
 
-Last updated: 2026-04-26 - Uses authoritative early exact-phrase detection,
-rare-term recovery, and stronger quote reranking while keeping BM25 seeding fast.
+Last updated: 2026-04-27 - Updated v1 tokenization imports to use analyzer_v1
+after renaming the old preprocessing module.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ from pathlib import Path
 from .authority import AuthorityIndex, load_default_authority_index
 from .config import DEFAULT_TOP_K
 from .passages import iter_transcript_files, movie_id_from_filename, split_text_into_passages
-from .preprocessing import tokenize
+from .analyzer_v1 import tokenize
 from .quote_matching import fuzzy_ratio
 from .ranking import minmax_normalize
 from .types import SearchResult
