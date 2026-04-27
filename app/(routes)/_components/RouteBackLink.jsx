@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Authors: Aiden Barnard & Atharva Patil
  * Assignment: 767 IR Project (Movie Dataset Search Engine)
@@ -5,8 +7,8 @@
  * Prologue:
  * Simple "back" button w/ customiazable href and label
  * 
- * Last updated: 2026-04-25 - Added a reusable back link matching the search page's
- * hover treatment for the how, transcripts, and movies pages.
+ * Last updated: 2026-04-27 - Marked the reusable back link as client-safe so
+ * interactive route pages can keep using the same navigation component.
  */
 
 import Link from "next/link";

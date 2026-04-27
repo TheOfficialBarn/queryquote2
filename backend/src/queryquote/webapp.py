@@ -5,8 +5,8 @@ Class: EECS 767 IR (Class Project)
 Prologue:
 API-only Flask application for QueryQuote search endpoints.
 
-Last updated: 2026-04-27 - Added short review comments explaining Flask app
-setup, index-version routing, request validation, and API server startup.
+Last updated: 2026-04-27 - Added multi-select decade and genre transcript
+filters with union-within-facet and intersection-across-facets behavior.
 """
 
 from __future__ import annotations
@@ -19,6 +19,12 @@ from flask import Flask, jsonify, request
 from .config import DEFAULT_TOP_K
 from .db_index import SQLiteSearchEngine
 from .db_index_v2 import SQLiteSearchEngineV2
+from .transcript_access import (
+    bounded_transcript_limit,
+    normalized_transcript_decades,
+    normalized_transcript_genres,
+)
+from .types import TranscriptDetail, TranscriptMovie
 
 
 def create_app(
@@ -70,6 +76,44 @@ def create_app(
         app.logger.error(f"Failed to load index from {index_dir}: {e}")
         raise
 
+    def _select_engine(
+        requested_version: str | None,
+        *,
+        prefer_v2: bool = False,
+    ) -> tuple[str, object] | tuple[None, None]:
+        """Pick a loaded search engine for an endpoint request."""
+        if requested_version:
+            if requested_version in search_engines:
+                return requested_version, search_engines[requested_version]
+            return None, None
+
+        selected_version = (
+            "v2"
+            if prefer_v2 and "v2" in search_engines
+            else default_index_version
+        )
+        return selected_version, search_engines[selected_version]
+
+    def _movie_payload(movie: TranscriptMovie) -> dict[str, object]:
+        """Serialize transcript movie metadata for JSON responses."""
+        return {
+            "movie_id": movie.movie_id,
+            "title": movie.title,
+            "year": movie.year,
+            "source_file": movie.source_file,
+            "genres": movie.genres,
+        }
+
+    def _transcript_payload(detail: TranscriptDetail) -> dict[str, object]:
+        """Serialize one opened transcript without exposing Python dataclasses."""
+        return {
+            "movie": _movie_payload(detail.movie),
+            "transcript": detail.transcript,
+            "source_file": detail.movie.source_file,
+            "resolved_source_file": detail.resolved_source_file,
+            "char_count": len(detail.transcript),
+        }
+
     @app.route("/", methods=["GET"])
     def root() -> str:
         """Describe available API endpoints."""
@@ -83,6 +127,7 @@ def create_app(
                 "endpoints": {
                     "health": "/api/health",
                     "search": "/api/search",
+                    "transcripts": "/api/transcripts",
                 },
             }
         )
@@ -175,6 +220,82 @@ def create_app(
         except Exception as e:
             # Log tracebacks server-side while returning a predictable JSON envelope.
             app.logger.error(f"Search error: {e}", exc_info=True)
+            return jsonify({"error": str(e), "results": [], "count": 0}), 500
+
+    @app.route("/api/transcripts", methods=["GET"])
+    def transcripts() -> str:
+        """List transcript movies or return one full transcript by movie_id."""
+        try:
+            requested_version = request.args.get("index_version")
+            index_version, search_engine = _select_engine(
+                requested_version,
+                prefer_v2=True,
+            )
+            if search_engine is None or index_version is None:
+                return jsonify(
+                    {
+                        "error": f"Index version is not available: {requested_version}",
+                        "available_index_versions": sorted(search_engines),
+                        "results": [],
+                        "count": 0,
+                    }
+                ), 400
+
+            movie_id = request.args.get("movie_id", "").strip()
+            if movie_id:
+                detail = search_engine.get_transcript(movie_id)
+                if detail is None:
+                    return jsonify(
+                        {
+                            "error": "Transcript movie was not found",
+                            "movie_id": movie_id,
+                            "index_version": index_version,
+                        }
+                    ), 404
+
+                return jsonify(
+                    {
+                        "index_version": index_version,
+                        **_transcript_payload(detail),
+                    }
+                )
+
+            if request.args.get("facets") == "true":
+                decades = search_engine.list_transcript_decades()
+                genres = search_engine.list_transcript_genres()
+                return jsonify(
+                    {
+                        "index_version": index_version,
+                        "decades": decades,
+                        "genres": genres,
+                        "count": len(decades) + len(genres),
+                    }
+                )
+
+            query = request.args.get("q", "").strip()
+            limit = bounded_transcript_limit(request.args.get("limit"))
+            genres = normalized_transcript_genres(request.args.getlist("genre"))
+            decades = normalized_transcript_decades(request.args.getlist("decade"))
+            movies = search_engine.list_transcript_movies(
+                query,
+                limit=limit,
+                genres=genres,
+                decades=decades,
+            )
+            return jsonify(
+                {
+                    "query": query,
+                    "index_version": index_version,
+                    "genres": genres,
+                    "decades": decades,
+                    "results": [_movie_payload(movie) for movie in movies],
+                    "count": len(movies),
+                    "limit": limit,
+                }
+            )
+
+        except Exception as e:
+            app.logger.error(f"Transcript browser error: {e}", exc_info=True)
             return jsonify({"error": str(e), "results": [], "count": 0}), 500
 
     @app.route("/api/health", methods=["GET"])

@@ -5,8 +5,8 @@ Class: EECS 767 IR (Class Project)
 Prologue:
 SQLite-backed indexing and search for large QueryQuote transcript corpora.
 
-Last updated: 2026-04-27 - Updated v1 tokenization imports to use analyzer_v1
-after renaming the old preprocessing module.
+Last updated: 2026-04-27 - Updated transcript filter signatures for
+multi-select decade and genre facets while preserving v1-compatible metadata.
 """
 
 from __future__ import annotations
@@ -20,13 +20,18 @@ import time
 from collections import Counter, defaultdict
 from pathlib import Path
 
-from .authority import AuthorityIndex, load_default_authority_index
+from .authority import AuthorityIndex, load_default_authority_index, split_movie_id
 from .config import DEFAULT_TOP_K
 from .passages import iter_transcript_files, movie_id_from_filename, split_text_into_passages
 from .analyzer_v1 import tokenize
 from .quote_matching import fuzzy_ratio
 from .ranking import minmax_normalize
-from .types import SearchResult
+from .transcript_access import (
+    bounded_transcript_limit,
+    escape_sql_like,
+    read_transcript_source,
+)
+from .types import SearchResult, TranscriptDetail, TranscriptMovie
 
 
 DEFAULT_TIMING_LOG_PATH = Path(__file__).resolve().parents[3] / "test" / "time-logs" / "times-v1.txt"
@@ -539,6 +544,115 @@ class SQLiteSearchEngine:
         """Get metadata value from a given connection."""
         row = conn.execute("SELECT value FROM meta WHERE key = ?", (key,)).fetchone()
         return row[0] if row else default
+
+    def list_transcript_movies(
+        self,
+        query: str = "",
+        *,
+        limit: int = 40,
+        decades: list[int] | None = None,
+        genres: list[str] | None = None,
+    ) -> list[TranscriptMovie]:
+        """List movies available in the v1 passage index for transcript browsing."""
+        safe_limit = bounded_transcript_limit(limit)
+        trimmed_query = query.strip()
+        conn = _connect(self.db_path)
+        try:
+            where_sql = ""
+            params: tuple[object, ...] = ()
+            if trimmed_query:
+                movie_pattern = f"%{escape_sql_like(trimmed_query)}%"
+                where_sql = "WHERE movie_id LIKE ? ESCAPE '\\'"
+                params = (movie_pattern,)
+
+            rows = conn.execute(
+                f"""
+                SELECT movie_id, MIN(source_file) AS source_file
+                FROM passages
+                {where_sql}
+                GROUP BY movie_id
+                ORDER BY movie_id COLLATE NOCASE
+                LIMIT ?
+                """,
+                (*params, safe_limit),
+            ).fetchall()
+        finally:
+            conn.close()
+
+        movies: list[TranscriptMovie] = []
+        for movie_id, source_file in rows:
+            title, year = split_movie_id(movie_id)
+            movies.append(
+                TranscriptMovie(
+                    movie_id=movie_id,
+                    title=title,
+                    year=year,
+                    source_file=source_file,
+                    genres=[],
+                )
+            )
+        return movies
+
+    def get_transcript(self, movie_id: str) -> TranscriptDetail | None:
+        """Open the full transcript source for a movie indexed by v1."""
+        conn = _connect(self.db_path)
+        try:
+            row = conn.execute(
+                """
+                SELECT movie_id, source_file
+                FROM passages
+                WHERE movie_id = ?
+                ORDER BY passage_id
+                LIMIT 1
+                """,
+                (movie_id,),
+            ).fetchone()
+        finally:
+            conn.close()
+
+        if row is None:
+            return None
+
+        found_movie_id, source_file = row
+        title, year = split_movie_id(found_movie_id)
+        transcript, resolved_source_file = read_transcript_source(source_file)
+        return TranscriptDetail(
+            movie=TranscriptMovie(
+                movie_id=found_movie_id,
+                title=title,
+                year=year,
+                source_file=source_file,
+                genres=[],
+            ),
+            transcript=transcript,
+            resolved_source_file=resolved_source_file,
+        )
+
+    def list_transcript_decades(self) -> list[int]:
+        """List release decades inferred from v1 movie IDs for filter chips."""
+        conn = _connect(self.db_path)
+        try:
+            rows = conn.execute(
+                """
+                SELECT DISTINCT movie_id
+                FROM passages
+                ORDER BY movie_id COLLATE NOCASE
+                """
+            ).fetchall()
+        finally:
+            conn.close()
+
+        decades = set()
+        for (movie_id,) in rows:
+            _, year = split_movie_id(movie_id)
+            if year and year.isdigit():
+                decades.add((int(year) // 10) * 10)
+
+        return sorted(decades)
+
+    def list_transcript_genres(self) -> list[str]:
+        """List genres available to v1 transcript browsing."""
+        return []
 
     def search(
         self,

@@ -7,8 +7,8 @@
  * Prologue:
  * Shared search results experience for QueryQuote route pages.
  * 
- * Last updated: 2026-04-27 - Added URL-backed Legacy Search selection so
- * frontend searches can target v1 while default searches use v2.
+ * Last updated: 2026-04-27 - Made quote result cards link to their movie's
+ * transcript detail page using the indexed movie_id.
  */
 
 import { useEffect, useMemo, useState } from "react";
@@ -198,16 +198,19 @@ function PaginationControls({ currentPage, pageCount, onPageChange }) {
 function ResultCard({ result }) {
   const score = Number(result.score);
   const scoreLabel = Number.isFinite(score) ? score.toFixed(3) : "n/a";
+  const transcriptHref = `/transcripts/${encodeURIComponent(result.movie_id)}`;
 
   return (
-    <article className="rounded-2xl border border-white/15 bg-black/35 p-4 sm:p-5">
-      <p className="text-xs text-blue-300/80">Score: {scoreLabel}</p>
-      {/* Regex in .replace() removes the underscores leftover from tokenization */}
-      {/* However, it is an underscore before "S" it turns into an apostrophe */}
-      <h2 className="mt-1 text-xl text-blue-300">{result.movie_id.replace(/_s\b/g, "'s").replace(/_/g,"")}</h2>
-      <p className="mt-2 text-sm text-white/80">{result.snippet}</p>
-      <p className="mt-3 break-all text-xs text-white/55">Source: {result.source_file}</p>
-    </article>
+    <Link href={transcriptHref} className="block">
+      <article className="rounded-2xl border border-white/15 bg-black/35 p-4 transition-colors hover:border-blue-300/50 hover:bg-blue-500/10 sm:p-5">
+        <p className="text-xs text-blue-300/80">Score: {scoreLabel}</p>
+        {/* Regex in .replace() removes the underscores leftover from tokenization */}
+        {/* However, it is an underscore before "S" it turns into an apostrophe */}
+        <h2 className="mt-1 text-xl text-blue-300">{result.movie_id.replace(/_s\b/g, "'s").replace(/_/g,"")}</h2>
+        <p className="mt-2 text-sm text-white/80">{result.snippet}</p>
+        <p className="mt-3 break-all text-xs text-white/55">Source: {result.source_file}</p>
+      </article>
+    </Link>
   );
 }
 

@@ -6,6 +6,9 @@ Prologue:
 This file is the shared "data shape" file for QueryQuote.
 It defines small dataclasses that other modules pass around.
 This is what we use instead of loose dictionaries or tuples
+
+Last updated: 2026-04-27 - Added genre metadata to transcript browser shapes
+so the frontend can filter and display Metacritic categories.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -26,6 +29,22 @@ class SearchResult:
     score: float            # Ranking score after query matching (& optional authority filtering)
     snippet: str            # Shortened preview of passage text: first 220 chars (MAY NEED TO CHANGE)
     source_file: str        # Transcript file path for traceability/debugging
+
+
+@dataclass(slots=True)
+class TranscriptMovie:
+    movie_id: str           # Stable transcript/movie identifier from the index
+    title: str              # Human-readable movie title
+    year: str | None        # Release year when the index can provide one
+    source_file: str        # Transcript file path for opening the full source
+    genres: list[str]       # Metacritic genres attached during authority matching
+
+
+@dataclass(slots=True)
+class TranscriptDetail:
+    movie: TranscriptMovie  # Metadata for the selected transcript movie
+    transcript: str         # Full transcript text read from the source file
+    resolved_source_file: str # Absolute or resolved local path used for reading
 
 
 # QREL is currently defined but **NOT USED** as a dataclass

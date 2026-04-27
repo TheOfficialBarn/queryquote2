@@ -5,8 +5,8 @@ Class: EECS 767 IR (Class Project)
 Prologue:
 SQLite v2 index builder and search engine for QueryQuote transcript experiments.
 
-Last updated: 2026-04-27 - Added relaxed content-phrase scoring to the default
-v2 reranker so source passages survive small wording and stopword differences.
+Last updated: 2026-04-27 - Added multi-select decade and genre filtering where
+facet values union internally and intersect across groups.
 """
 
 from __future__ import annotations
@@ -34,7 +34,13 @@ from .config import DEFAULT_MAX_PASSAGE_TOKENS, DEFAULT_PASSAGE_OVERLAP, DEFAULT
 from .passages import iter_transcript_files, movie_id_from_filename
 from .quote_matching import fuzzy_ratio
 from .ranking import minmax_normalize
-from .types import SearchResult
+from .transcript_access import (
+    bounded_transcript_limit,
+    escape_sql_like,
+    read_transcript_source,
+    split_authority_genres,
+)
+from .types import SearchResult, TranscriptDetail, TranscriptMovie
 
 
 DEFAULT_AUTHORITY_COMPACT_CSV_PATH = Path(__file__).resolve().parents[2] / "authority_compact.csv"
@@ -1047,6 +1053,182 @@ class SQLiteSearchEngineV2:
     def _meta_from_conn(self, conn: sqlite3.Connection, key: str, default: str) -> str:
         row = conn.execute("SELECT value FROM meta WHERE key = ?", (key,)).fetchone()
         return row[0] if row else default
+
+    def list_transcript_movies(
+        self,
+        query: str = "",
+        *,
+        limit: int = 40,
+        decades: list[int] | None = None,
+        genres: list[str] | None = None,
+    ) -> list[TranscriptMovie]:
+        """List movies from the v2 movies table for direct transcript browsing."""
+        safe_limit = bounded_transcript_limit(limit)
+        trimmed_query = query.strip()
+        selected_decades = decades or []
+        selected_genres = [genre.strip() for genre in (genres or []) if genre.strip()]
+        where_clauses: list[str] = []
+        params: list[object] = []
+
+        if trimmed_query:
+            escaped_query = escape_sql_like(trimmed_query)
+            contains_pattern = f"%{escaped_query}%"
+            where_clauses.append(
+                """
+                (
+                    title LIKE ? ESCAPE '\\'
+                    OR movie_id LIKE ? ESCAPE '\\'
+                    OR IFNULL(year, '') LIKE ? ESCAPE '\\'
+                )
+                """
+            )
+            params.extend([contains_pattern, contains_pattern, contains_pattern])
+
+        if selected_decades:
+            decade_clauses = [
+                "(CAST(year AS INTEGER) >= ? AND CAST(year AS INTEGER) < ?)"
+                for _ in selected_decades
+            ]
+            where_clauses.append(f"({' OR '.join(decade_clauses)})")
+            for decade in selected_decades:
+                params.extend([decade, decade + 10])
+
+        if selected_genres:
+            genre_clauses = [
+                "(',' || IFNULL(authority_genres, '') || ',') LIKE ? ESCAPE '\\'"
+                for _ in selected_genres
+            ]
+            where_clauses.append(f"({' OR '.join(genre_clauses)})")
+            params.extend(
+                f"%,{escape_sql_like(genre)},%"
+                for genre in selected_genres
+            )
+
+        where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
+        conn = _connect(self.db_path)
+        try:
+            if trimmed_query:
+                prefix_pattern = f"{escaped_query}%"
+                rows = conn.execute(
+                    f"""
+                    SELECT movie_id, title, year, source_file, authority_genres
+                    FROM movies
+                    {where_sql}
+                    ORDER BY
+                        CASE
+                            WHEN title LIKE ? ESCAPE '\\' THEN 0
+                            WHEN movie_id LIKE ? ESCAPE '\\' THEN 1
+                            ELSE 2
+                        END,
+                        title COLLATE NOCASE,
+                        year
+                    LIMIT ?
+                    """,
+                    (*params, prefix_pattern, prefix_pattern, safe_limit),
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    f"""
+                    SELECT movie_id, title, year, source_file, authority_genres
+                    FROM movies
+                    {where_sql}
+                    ORDER BY title COLLATE NOCASE, year
+                    LIMIT ?
+                    """,
+                    (*params, safe_limit),
+                ).fetchall()
+        finally:
+            conn.close()
+
+        return [
+            TranscriptMovie(
+                movie_id=movie_id,
+                title=title,
+                year=year,
+                source_file=source_file,
+                genres=split_authority_genres(authority_genres),
+            )
+            for movie_id, title, year, source_file, authority_genres in rows
+        ]
+
+    def get_transcript(self, movie_id: str) -> TranscriptDetail | None:
+        """Open the full transcript source for a movie indexed by v2."""
+        conn = _connect(self.db_path)
+        try:
+            row = conn.execute(
+                """
+                SELECT movie_id, title, year, source_file, authority_genres
+                FROM movies
+                WHERE movie_id = ?
+                LIMIT 1
+                """,
+                (movie_id,),
+            ).fetchone()
+        finally:
+            conn.close()
+
+        if row is None:
+            return None
+
+        found_movie_id, title, year, source_file, authority_genres = row
+        transcript, resolved_source_file = read_transcript_source(source_file)
+        return TranscriptDetail(
+            movie=TranscriptMovie(
+                movie_id=found_movie_id,
+                title=title,
+                year=year,
+                source_file=source_file,
+                genres=split_authority_genres(authority_genres),
+            ),
+            transcript=transcript,
+            resolved_source_file=resolved_source_file,
+        )
+
+    def list_transcript_decades(self) -> list[int]:
+        """List release decades available in the indexed movies table."""
+        conn = _connect(self.db_path)
+        try:
+            rows = conn.execute(
+                """
+                SELECT DISTINCT (CAST(year AS INTEGER) / 10) * 10 AS decade
+                FROM movies
+                WHERE year GLOB '[0-9][0-9][0-9][0-9]'
+                ORDER BY decade
+                """
+            ).fetchall()
+        finally:
+            conn.close()
+
+        return [int(row[0]) for row in rows if row[0] is not None]
+
+    def list_transcript_genres(self) -> list[str]:
+        """List Metacritic genres available in the indexed movies table."""
+        conn = _connect(self.db_path)
+        try:
+            rows = conn.execute(
+                """
+                WITH RECURSIVE split(rest, genre) AS (
+                    SELECT authority_genres || ',', ''
+                    FROM movies
+                    WHERE authority_genres IS NOT NULL
+                      AND authority_genres != ''
+                    UNION ALL
+                    SELECT
+                        substr(rest, instr(rest, ',') + 1),
+                        trim(substr(rest, 1, instr(rest, ',') - 1))
+                    FROM split
+                    WHERE rest != ''
+                )
+                SELECT DISTINCT genre
+                FROM split
+                WHERE genre != ''
+                ORDER BY genre COLLATE NOCASE
+                """
+            ).fetchall()
+        finally:
+            conn.close()
+
+        return [row[0] for row in rows]
 
     def search(
         self,
