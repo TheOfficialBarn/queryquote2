@@ -1,5 +1,10 @@
-"""Prologue:
+"""
+Authors: Aiden Barnard & Atharva Patil
+Class: EECS 767 IR (Class Project)
+
+Prologue:
 CSV-backed authority scoring for opt-in movie ranking adjustments.
+
 Last updated: 2026-04-26 - Switched the default source to the compact
 authority CSV so ranking metadata stays small while preserving vote-based
 multiplier behavior.

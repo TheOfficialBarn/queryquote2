@@ -1,5 +1,10 @@
-"""Prologue:
+"""
+Authors: Aiden Barnard & Atharva Patil
+Class: EECS 767 IR (Class Project)
+
+Prologue:
 Version 2 text analyzer for quote-focused indexing.
+
 Last updated: 2026-04-26 - Adds contraction expansion and separate full-token
 and BM25-token streams so phrase matching can keep stopwords while ranking can
 stay selective.

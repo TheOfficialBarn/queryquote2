@@ -1,3 +1,10 @@
+"""
+Authors: Aiden Barnard & Atharva Patil
+Class: EECS 767 IR (Class Project)
+
+Prologue:
+
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

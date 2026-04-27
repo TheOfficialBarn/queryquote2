@@ -1,5 +1,5 @@
 """
-Authors: Aiden Barnard & Atharva
+Authors: Aiden Barnard & Atharva Patil
 Class: EECS 767 IR (Class Project)
 
 Prologue:

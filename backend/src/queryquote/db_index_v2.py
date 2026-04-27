@@ -1,5 +1,10 @@
-"""Prologue:
+"""
+Authors: Aiden Barnard & Atharva Patil
+Class: EECS 767 IR (Class Project)
+
+Prologue:
 SQLite v2 index builder and search engine for QueryQuote transcript experiments.
+
 Last updated: 2026-04-27 - Added relaxed content-phrase scoring to the default
 v2 reranker so source passages survive small wording and stopword differences.
 """

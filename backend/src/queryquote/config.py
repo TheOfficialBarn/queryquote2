@@ -1,5 +1,10 @@
-"""Prologue:
+"""
+Authors: Aiden Barnard & Atharva Patil
+Class: EECS 767 IR (Class Project)
+
+Prologue:
 Shared configuration values for QueryQuote indexing, ranking, and search defaults.
+
 Last updated: 2026-04-26 - Raised the default search result count to Top 50
 to support two-page search results without user-selectable Top K controls.
 """

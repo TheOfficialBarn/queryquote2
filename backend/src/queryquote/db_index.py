@@ -1,5 +1,10 @@
-"""Prologue:
+"""
+Authors: Aiden Barnard & Atharva Patil
+Class: EECS 767 IR (Class Project)
+
+Prologue:
 SQLite-backed indexing and search for large QueryQuote transcript corpora.
+
 Last updated: 2026-04-26 - Uses authoritative early exact-phrase detection,
 rare-term recovery, and stronger quote reranking while keeping BM25 seeding fast.
 """

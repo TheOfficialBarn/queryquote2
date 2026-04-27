@@ -1,5 +1,10 @@
-"""Prologue:
+"""
+Authors: Aiden Barnard & Atharva Patil
+Class: EECS 767 IR (Class Project)
+
+Prologue:
 Shared score normalization helpers for SQLite-backed QueryQuote search.
+
 Last updated: 2026-04-27 - Removed deprecated in-memory BM25/TF-IDF helpers
 after dropping the pickle backend.
 """

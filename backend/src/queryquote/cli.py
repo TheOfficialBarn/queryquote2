@@ -9,6 +9,10 @@ Last updated: 2026-04-27 - Added short review comments explaining the CLI
 command handlers, backend selection, and parser setup.
 """
 
+# **REMEMBER THE FRONT END DOES NOT USE THE CLI**
+# THIS IS MEANT FOR THE USER, PRIMARILY FOR BUILDING INDEXES
+# AND FOR TESTING SEARCH/EVALUATION W/O HAVING TO USE THE FRONTEND
+
 from __future__ import annotations
 
 import argparse
@@ -51,6 +55,8 @@ def cmd_build_v2(args: argparse.Namespace) -> None:
 
 def cmd_search(args: argparse.Namespace) -> None:
     # Load the requested SQLite engine, run one query, and print ranked passages.
+    # This is used when someone runs the terminal CLI subcommand queryquote search...
+
     engine = _load_search_engine(args)
 
     results = engine.search(
@@ -70,6 +76,9 @@ def cmd_search(args: argparse.Namespace) -> None:
 
 def cmd_evaluate(args: argparse.Namespace) -> None:
     # Replay a query set through one engine, then score the run against qrels.
+    # Used wehen someone runs subcommand queryquote evaluate
+    # It loads search engine and runs every query from a JSONL query file, comparing it against
+    # qrels for OFFLINE IR EVALUATION
     engine = _load_search_engine(args)
 
     queries = load_queries(args.queries)
@@ -104,6 +113,9 @@ def _load_search_engine(args: argparse.Namespace):
 
 def build_parser() -> argparse.ArgumentParser:
     # argparse owns the command surface for the installed `queryquote` CLI.
+    # Defines the CLI for the installed "queryquote" command.
+    # ESSENTIALLY TELLS PYTHON WHAT IS A VALID COMMAND, WHAT IS REQUIRED/OPTIONAL ARGUMENT, ETC.
+
     parser = argparse.ArgumentParser(description="QueryQuote IR system")
     sub = parser.add_subparsers(dest="command", required=True)
 
