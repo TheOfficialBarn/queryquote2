@@ -1,29 +1,42 @@
 "use client";
 
 /**
+ * Authors: Aiden Barnard & Atharva Patil
+ * Assignment: 767 IR Project (Movie Dataset Search Engine)
+ * 
  * Prologue:
  * Shared search results experience for QueryQuote route pages.
- * Last updated: 2026-04-26 - Replaced variable Top K controls with fixed
- * Top 50 retrieval and two client-side result pages.
+ * 
+ * Last updated: 2026-04-27 - Added function-level prologue comments so each
+ * search results helper and component is easier to review.
  */
+
 import { useEffect, useMemo, useState } from "react";
 import { Jersey_10 } from "next/font/google";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+// QueryQuote's font
 const movieFont = Jersey_10({
   weight: ["400"],
   subsets: ["latin"],
 });
 
+// Search results to search through
 export const defaultSearchTopK = 50;
+// How many appear "above-the-fold"
 export const searchResultsPerPage = 25;
 
+
+// Normalizes any page value from the URL into the supported search result pages.
 export function normalizeSearchPage(value) {
   const parsed = Number(value);
   return parsed === 2 ? 2 : 1;
 }
 
+
+// Builds a shareable search results URL from the query, page, route path, and
+// optional Authority Boost setting.
 export function buildSearchResultsUrl({
   query,
   page = 1,
@@ -42,6 +55,9 @@ export function buildSearchResultsUrl({
   return `${pathname}?${params.toString()}`;
 }
 
+
+// Rendrs the magnifying glass icon used by search inputs in the results view.
+// Used from Heroicons.com
 function SearchIcon() {
   return (
     <svg
@@ -62,6 +78,9 @@ function SearchIcon() {
   );
 }
 
+
+// Renders the sticky results-page search bar, including query input, search
+// button, Authority Boost toggle, and query duration display.
 function TopSearchBar({
   query,
   authorityFilter,
@@ -128,6 +147,9 @@ function TopSearchBar({
   );
 }
 
+
+// Renders page navigation for the two client-side search result pages when
+// enough results exist to paginate.
 function PaginationControls({ currentPage, pageCount, onPageChange }) {
   if (pageCount < 2) {
     return null;
@@ -154,6 +176,9 @@ function PaginationControls({ currentPage, pageCount, onPageChange }) {
   );
 }
 
+
+// Renders one search result card with score, movie identifier, snippet, and
+// source file metadata.
 function ResultCard({ result }) {
   const score = Number(result.score);
   const scoreLabel = Number.isFinite(score) ? score.toFixed(3) : "n/a";
@@ -168,6 +193,9 @@ function ResultCard({ result }) {
   );
 }
 
+
+// Renders the empty state shown when the backend returns no matching quote
+// results or when the search request fails.
 function ResultsEmptyState({ query, errorMessage }) {
   return (
     <article className="rounded-2xl border border-white/15 bg-black/35 p-5">
@@ -179,6 +207,9 @@ function ResultsEmptyState({ query, errorMessage }) {
   );
 }
 
+
+// Converts an elapsed query duration in milliseconds into padded
+// hours/minutes/seconds/milliseconds segments for display.
 function formatQueryDuration(durationMs) {
   const totalMs = Math.max(0, Math.floor(durationMs));
   const milliseconds = totalMs % 1000;
@@ -197,6 +228,9 @@ function formatQueryDuration(durationMs) {
   };
 }
 
+
+// Displays the formatted query timer with separate visual styling for each
+// time segment.
 function QueryDurationText({ durationMs }) {
   const duration = formatQueryDuration(durationMs ?? 0);
   const separatorClassName = "text-white/45";
@@ -214,6 +248,9 @@ function QueryDurationText({ durationMs }) {
   );
 }
 
+
+// Renders the right-side search metadata panel that summarizes the current
+// query, result count, requested count, page, and Authority Boost state.
 function KnowledgePanel({ query, count, currentPage, authorityFilter }) {
   return (
     <aside className="rounded-2xl border border-white/15 bg-black/40 p-5">
@@ -238,6 +275,10 @@ function KnowledgePanel({ query, count, currentPage, authorityFilter }) {
   );
 }
 
+
+// Coordinates the search results experience by fetching results, tracking
+// search state, routing new searches, paginating results, and rendering the
+// results layout.
 export default function SearchResultsView({
   initialQuery,
   initialPage = 1,
@@ -259,6 +300,9 @@ export default function SearchResultsView({
 
     const controller = new AbortController();
 
+
+    // Fetches search results for the current URL query while updating loading,
+    // error, result, and timer state.
     async function fetchResults() {
       const startedAt = performance.now();
       const timerId = window.setInterval(() => {
@@ -334,6 +378,9 @@ export default function SearchResultsView({
     return `${resultCount} result${resultCount === 1 ? "" : "s"}${filterLabel}${pageLabel}`;
   }, [currentPage, initialQuery, isSearching, pageCount, responseData?.authority_filter, resultCount]);
 
+
+  // Handles a new search from the sticky search bar by validating
+  // input and routing to a fresh search results URL.
   function handleSubmit(event) {
     event.preventDefault();
 
@@ -344,6 +391,9 @@ export default function SearchResultsView({
     router.push(buildSearchResultsUrl({ query, authorityFilter, pathname }));
   }
 
+
+  // Handles results page changes by preserving the active query and Authority Boost
+  // Setting while updating the page number in the URL
   function handlePageChange(page) {
     router.push(
       buildSearchResultsUrl({

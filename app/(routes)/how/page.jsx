@@ -1,8 +1,12 @@
 /**
+ * Authors: Aiden Barnard & Atharva Patil
+ * Assignment: 767 IR Project (Movie Dataset Search Engine)
+ * 
  * Prologue:
  * Simplified implementation for the QueryQuote "How it Works" page.
  * The page is now driven by a few compact data structures and one shared section
  * renderer so the route stays easy to scan and update without repeated card markup.
+ * 
  * Last updated: 2026-04-26 - Updated the request-flow copy to reflect fixed
  * Top 50 searches with paginated frontend results.
  */

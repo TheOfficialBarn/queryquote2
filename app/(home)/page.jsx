@@ -1,16 +1,24 @@
 /**
+ * Authors: Aiden Barnard & Atharva Patil
+ * Assignment: 767 IR Project (Movie Dataset Search Engine)
+ * 
+ * 
  * Prologue:
- * Home landing page hero copy/actions.
+ * Home landing page / about page. Brief description of project w/ a continue button
+ * 
  * Last updated: 2026-04-23 - Updated both curved marquee rails to neutral-800/90 text color.
  */
-import { Jersey_10 } from "next/font/google";
-import Link from "next/link";
 
+import { Jersey_10 } from "next/font/google"; // Our QueryQuote font
+import Link from "next/link"; // Next.js version of <a>
+
+// Initializing font variable
 const movieFont = Jersey_10({
   weight: ["400"],
   subsets: ["latin"],
 });
 
+// Movie text that scrolls w/ marquee styling
 const marqueeMovies = [
   "The Dark Knight",
   "Pulp Fiction",
@@ -22,6 +30,8 @@ const marqueeMovies = [
 ];
 const marqueeText = `${marqueeMovies.join("  •  ")}  •  ${marqueeMovies.join("  •  ")}  •  `;
 
+// Wavy marquee text
+// Coauthored by ChatGPT (5.5)
 function WavyMarquee({ className = "", reverse = false }) {
   return (
     <div className={`w-screen overflow-hidden ${className}`}>

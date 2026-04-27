@@ -1,10 +1,14 @@
 /**
+ * Authors: Aiden Barnard & Atharva Patil
+ * Assignment: 767 IR Project (Movie Dataset Search Engine)
+ * 
  * Prologue:
- * Shared back-link control for route pages that need a lightweight return action.
- * Centralizing the link keeps the styling consistent across informational routes.
+ * Simple "back" button w/ customiazable href and label
+ * 
  * Last updated: 2026-04-25 - Added a reusable back link matching the search page's
  * hover treatment for the how, transcripts, and movies pages.
  */
+
 import Link from "next/link";
 
 export default function RouteBackLink({ href = "/search", label = "← Back" }) {

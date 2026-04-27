@@ -1,11 +1,16 @@
 "use client";
 
 /**
+ * Authors: Aiden Barnard & Atharva Patil
+ * Assignment: 767 IR Project (Movie Dataset Search Engine)
+ * 
  * Prologue:
  * Search route UI for quote discovery with a search-first experience and quick filters.
+ * 
  * Last updated: 2026-04-26 - Removed Top K selection so searches always load
  * Top 50 results with page state handled in the results view.
  */
+
 import { Suspense, useState } from "react";
 import { Jersey_10 } from "next/font/google";
 import Link from "next/link";
@@ -15,11 +20,13 @@ import SearchResultsView, {
   normalizeSearchPage,
 } from "../_components/SearchResultsView";
 
+// Queryquote font
 const movieFont = Jersey_10({
   weight: ["400"],
   subsets: ["latin"],
 });
 
+// Marquee quote ideas that scroll through search bar when no query typed in
 const tickerQuotes = [
   '"I\'ll be back"',
   '"Why so serious?"',
@@ -27,6 +34,7 @@ const tickerQuotes = [
   '"Roads? Where we\'re going, we don\'t need roads."',
 ];
 
+// Authority Boost toggle (MAY GET RID OF SOON)
 function AuthorityFilterToggle({ enabled, onChange }) {
   return (
     <button
@@ -84,66 +92,73 @@ function SearchLandingPage() {
 
       {/* Search */}
       <div className="min-h-screen px-6 py-16 md:py-20 flex items-center justify-center">
-      <section className="mx-auto w-full max-w-3xl text-center">
-        <p className="text-xs uppercase tracking-[0.25em]">
-          <span className="bg-linear-to-r from-blue-700 via-purple-700 to-indigo-800 bg-clip-text text-transparent">
-            Query Quote
-          </span>
-        </p>
-        <h1 className={`${movieFont.className} mt-2 text-5xl md:text-6xl tracking-wide`}>
-          Find The Right Movie
-        </h1>
-        <p className="mt-4 mx-auto max-w-2xl text-white/80">
-          Search by exact quote or rough wording. We will help you track down the movie & scene you are thinking of.
-        </p>
+        <section className="mx-auto w-full max-w-3xl text-center">
+          <p className="text-xs uppercase tracking-[0.25em]">
+            <span className="bg-linear-to-r from-blue-700 via-purple-700 to-indigo-800 bg-clip-text text-transparent">
+              Query Quote
+            </span>
+          </p>
+          <h1 className={`${movieFont.className} mt-2 text-5xl md:text-6xl tracking-wide`}>
+            Find The Right Movie
+          </h1>
+          <p className="mt-4 mx-auto max-w-2xl text-white/80">
+            Search by exact quote or rough wording. We will help you track down the movie & scene you are thinking of.
+          </p>
 
-        <form className="mt-8" onSubmit={handleSearch}>
-          <div className="flex items-center gap-2 bg-white rounded-full p-1 text-black transition-shadow duration-150 focus-within:ring-2 focus-within:ring-blue-500/80 focus-within:ring-offset-2 focus-within:ring-offset-transparent">
-            <SearchIcon />
-            <div className="relative w-full">
-              <input
-                type="search"
-                placeholder="Search for a quote..."
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                className="peer w-full bg-transparent outline-none placeholder:text-transparent"
-                autoComplete="off"
-              />
-              <div className="pointer-events-none absolute inset-y-0 left-0 right-0 hidden items-center overflow-hidden peer-placeholder-shown:flex peer-focus:hidden">
-                <div className="quote-ticker-inline">
-                  {[...tickerQuotes, ...tickerQuotes].map((quote, index) => (
-                    <span
-                      key={`${quote}-inline-${index}`}
-                      className="mx-3 whitespace-nowrap text-black/55"
-                    >
-                      {quote}
-                    </span>
-                  ))}
+          <form className="mt-8" onSubmit={handleSearch}>
+            <div className="flex items-center gap-2 bg-white rounded-full p-1 text-black transition-shadow duration-150 focus-within:ring-2 focus-within:ring-blue-500/80 focus-within:ring-offset-2 focus-within:ring-offset-transparent">
+              {/* Search Icon from Heroicons.com */}
+              <SearchIcon />
+              {/* Search Bar */}
+              <div className="relative w-full">
+                <input
+                  type="search"
+                  placeholder="Search for a quote..."
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  className="peer w-full bg-transparent outline-none placeholder:text-transparent"
+                  autoComplete="off"
+                />
+
+                {/* This is the animated placeholder marquee text that scrolls when the search bar input is empty */}
+                <div className="pointer-events-none absolute inset-y-0 left-0 right-0 hidden items-center overflow-hidden peer-placeholder-shown:flex peer-focus:hidden">
+                  <div className="quote-ticker-inline">
+                    {[...tickerQuotes, ...tickerQuotes].map((quote, index) => (
+                      <span
+                        key={`${quote}-inline-${index}`}
+                        className="mx-3 whitespace-nowrap text-black/55"
+                      >
+                        {quote}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
+              {/* Search Button */}
+              <button
+                type="submit"
+                disabled={!query.trim()}
+                className="bg-black text-white rounded-full p-3 font-semibold tracking-tight transition-all duration-150 hover:bg-neutral-950 active:scale-95 focus-visible:ring-blue-500/60 disabled:cursor-not-allowed disabled:bg-neutral-700"
+              >
+                Search
+              </button>
             </div>
-            <button
-              type="submit"
-              disabled={!query.trim()}
-              className="bg-black text-white rounded-full p-3 font-semibold tracking-tight transition-all duration-150 hover:bg-neutral-950 active:scale-95 focus-visible:ring-blue-500/60 disabled:cursor-not-allowed disabled:bg-neutral-700"
-            >
-              Search
-            </button>
-          </div>
-          <div className="flex justify-center">
-            <AuthorityFilterToggle
-              enabled={useAuthorityFilter}
-              onChange={setUseAuthorityFilter}
-            />
-          </div>
-        </form>
-
-      </section>
+            {/* Authority Boost Toggle */}
+            <div className="flex justify-center">
+              <AuthorityFilterToggle
+                enabled={useAuthorityFilter}
+                onChange={setUseAuthorityFilter}
+              />
+            </div>
+          </form>
+        </section>
       </div>
     </main>
   );
 }
 
+// This function deicdes what the /search page should show based on the URL query parameters
+// e.g. localhost:3000/search?{ Query }
 function SearchPageContent() {
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get("q") || "";
@@ -153,6 +168,7 @@ function SearchPageContent() {
 
   if (initialQuery.trim()) {
     return (
+      // Will return the Search Results Page (meant to look like the page you see after searching something on Google)
       <SearchResultsView
         key={pageStateKey}
         initialQuery={initialQuery}
@@ -162,9 +178,12 @@ function SearchPageContent() {
     );
   }
 
+  // Remain on localhost:3000/search if no query provided
   return <SearchLandingPage />;
 }
 
+// We have to wrap the page in Suspense because:
+// SearchPageContent uses the Next hook: useSearchParams();
 export default function SearchPage() {
   return (
     <Suspense fallback={<main className="min-h-screen p-6 text-white/70">Loading search...</main>}>
@@ -173,6 +192,7 @@ export default function SearchPage() {
   );
 }
 
+// Magnifying Glass copied from Heroicons.com
 function SearchIcon() {
   return (
     <svg

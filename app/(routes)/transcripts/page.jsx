@@ -1,11 +1,16 @@
 /**
+ * Authors: Aiden Barnard & Atharva Patil
+ * Assignment: 767 IR Project (Movie Dataset Search Engine)
+ * 
  * Prologue:
  * Placeholder transcripts route kept inside the shared app shell.
  * The page currently provides a consistent back affordance while the transcript
  * browsing experience is still being built out.
+ * 
  * Last updated: 2026-04-25 - Added the shared back link used by the how and
  * movies pages so secondary routes navigate consistently back to search.
  */
+
 import RouteBackLink from "../_components/RouteBackLink";
 
 export default function Transcripts() {
