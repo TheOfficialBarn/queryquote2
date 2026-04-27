@@ -1,4 +1,8 @@
-"""Prologue:
+"""
+Authors: Aiden Barnard & Atharva
+Class: EECS 767 IR (Class Project)
+
+Prologue:
 Regression coverage for authority vote-count parsing and movie matching.
 Last updated: 2026-04-25 - Added tests proving sparse-vote movies are
 penalized, high-vote movies are boosted, and missing movies stay unadjusted.

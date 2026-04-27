@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+/test/
 
 # next.js
 /.next/
@@ -45,6 +46,23 @@ next-env.d.ts
 /backend/data2/
 /backend/data2_intersection/
 /backend/data2_rest/
+/backend/indexes/
 /backend/movie-transcripts-59k/
 /backend/movies.json
-backend/subtitles-dataset/
+/backend/subtitles-dataset/
+
+# local Python environments and generated package/cache output
+/.venv/
+/venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# local timing and diagnostics output
+/backend/time.txt
+/backend/textv2.txt

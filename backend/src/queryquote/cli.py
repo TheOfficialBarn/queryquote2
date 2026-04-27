@@ -1,47 +1,29 @@
 """Prologue:
 Command-line entry points for building, searching, and evaluating QueryQuote indexes.
-Last updated: 2026-04-27 - Added explicit v1/v2 SQLite search selection so
-the legacy and v2 indexes can be queried and evaluated independently.
+Last updated: 2026-04-27 - Removed the deprecated pickle backend; CLI now
+targets SQLite v1 and SQLite v2 indexes only.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 
 from .config import DEFAULT_MAX_PASSAGE_TOKENS, DEFAULT_PASSAGE_OVERLAP, DEFAULT_TOP_K
 from .db_index import SQLiteSearchEngine, build_sqlite_index
 from .db_index_v2 import SQLiteSearchEngineV2, build_sqlite_index_v2
 from .evaluation import evaluate_run, load_qrels, load_queries
-from .indexing import IndexBundle, build_index, save_index
-from .passages import collect_passages
-from .search_engine import SearchEngine
 
 
 def cmd_build(args: argparse.Namespace) -> None:
-    if args.backend in {"sqlite", "sqlite-v1"}:
-        db_path = build_sqlite_index(
-            data_dir=args.data_dir,
-            output_dir=args.output_dir,
-            max_passage_tokens=args.max_passage_tokens,
-            passage_overlap=args.passage_overlap,
-            progress_every_files=args.progress_every_files,
-        )
-        print(f"Indexed corpus into SQLite DB: {db_path}")
-        return
-
-    passages = collect_passages(
-        args.data_dir,
-        max_tokens=args.max_passage_tokens,
-        overlap=args.passage_overlap,
+    db_path = build_sqlite_index(
+        data_dir=args.data_dir,
+        output_dir=args.output_dir,
+        max_passage_tokens=args.max_passage_tokens,
+        passage_overlap=args.passage_overlap,
+        progress_every_files=args.progress_every_files,
     )
-    index = build_index(passages)
-    bundle = IndexBundle(index=index, passages=passages)
-    save_index(bundle, args.output_dir)
-    print(
-        f"Indexed {len(passages)} passages from {args.data_dir} -> {Path(args.output_dir) / 'index_bundle.pkl'}"
-    )
+    print(f"Indexed corpus into SQLite DB: {db_path}")
 
 
 def cmd_build_v2(args: argparse.Namespace) -> None:
@@ -102,7 +84,7 @@ def _load_search_engine(args: argparse.Namespace):
         return SQLiteSearchEngineV2.from_index_dir(v2_index_dir)
     if backend in {"sqlite", "sqlite-v1"}:
         return SQLiteSearchEngine.from_index_dir(args.index_dir)
-    return SearchEngine.from_index_dir(args.index_dir)
+    raise ValueError(f"Unsupported backend: {backend}")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -114,9 +96,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_build.add_argument("--output-dir", required=True, help="Where to save index")
     p_build.add_argument(
         "--backend",
-        choices=["sqlite", "sqlite-v1", "pickle"],
+        choices=["sqlite", "sqlite-v1"],
         default="sqlite",
-        help="Index storage backend (sqlite is streaming and reusable)",
+        help="Index storage backend",
     )
     p_build.add_argument(
         "--max-passage-tokens",
@@ -189,7 +171,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_search.add_argument("--index-dir", required=True)
     p_search.add_argument(
         "--backend",
-        choices=["sqlite", "sqlite-v1", "sqlite-v2", "pickle"],
+        choices=["sqlite", "sqlite-v1", "sqlite-v2"],
         default="sqlite",
         help="Search backend",
     )
@@ -217,7 +199,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_eval.add_argument("--index-dir", required=True)
     p_eval.add_argument(
         "--backend",
-        choices=["sqlite", "sqlite-v1", "sqlite-v2", "pickle"],
+        choices=["sqlite", "sqlite-v1", "sqlite-v2"],
         default="sqlite",
         help="Evaluation backend",
     )

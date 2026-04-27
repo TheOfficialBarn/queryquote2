@@ -1,7 +1,7 @@
 """Prologue:
 API-only Flask application for QueryQuote search endpoints.
-Last updated: 2026-04-27 - Added explicit v1/v2 SQLite index selection so
-one backend can compare legacy and v2 search results.
+Last updated: 2026-04-27 - Removed deprecated pickle backend support so the API
+serves SQLite v1 and SQLite v2 indexes only.
 """
 
 from __future__ import annotations
@@ -14,7 +14,6 @@ from flask import Flask, jsonify, request
 from .config import DEFAULT_TOP_K
 from .db_index import SQLiteSearchEngine
 from .db_index_v2 import SQLiteSearchEngineV2
-from .search_engine import SearchEngine
 
 
 def create_app(
@@ -28,7 +27,7 @@ def create_app(
 
     Args:
         index_dir: Path to the index directory
-        backend: Index backend ("sqlite", "sqlite-v1", "sqlite-v2", or "pickle")
+        backend: Index backend ("sqlite", "sqlite-v1", or "sqlite-v2")
         v2_index_dir: Optional v2 index directory for side-by-side API comparisons.
         default_index_version: Index version used when the request omits one.
 
@@ -45,8 +44,6 @@ def create_app(
         elif backend == "sqlite-v2":
             search_engines["v2"] = SQLiteSearchEngineV2.from_index_dir(index_dir)
             default_index_version = "v2"
-        elif backend == "pickle":
-            search_engines["v1"] = SearchEngine.from_index_dir(index_dir)
         else:
             raise ValueError(f"Unsupported backend: {backend}")
 
@@ -183,7 +180,7 @@ def main() -> None:
     parser.add_argument(
         "--backend",
         default="sqlite",
-        choices=["sqlite", "sqlite-v1", "sqlite-v2", "pickle"],
+        choices=["sqlite", "sqlite-v1", "sqlite-v2"],
         help="Index backend (default: sqlite)",
     )
     parser.add_argument(

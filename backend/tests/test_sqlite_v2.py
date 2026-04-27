@@ -1,4 +1,8 @@
-"""Prologue:
+"""
+Authors: Aiden Barnard & Atharva
+Class: EECS 767 IR (Class Project)
+
+Prologue:
 Regression coverage for v1/v2 SQLite backend selection and v2 search.
 Last updated: 2026-04-27 - Added relaxed phrase coverage for v2 ranking when
 small wording differences would otherwise break full exact-phrase matching.

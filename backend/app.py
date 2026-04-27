@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Prologue:
 Quick launcher for the QueryQuote API server.
-Last updated: 2026-04-27 - Added v1/v2 backend selection arguments for
-side-by-side SQLite index comparisons.
+Last updated: 2026-04-27 - Renamed from run_web.py to app.py; the installed
+queryquote-web command remains the preferred way to start the API.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(
         description="Launch QueryQuote API Server",
-        epilog="Example: python run_web.py --index-dir data/index",
+        epilog="Example: python backend/app.py --index-dir backend/data/index",
     )
     parser.add_argument(
         "--index-dir",
@@ -43,7 +43,7 @@ def main() -> None:
     parser.add_argument(
         "--backend",
         default="sqlite",
-        choices=["sqlite", "sqlite-v1", "sqlite-v2", "pickle"],
+        choices=["sqlite", "sqlite-v1", "sqlite-v2"],
         help="Index backend (default: sqlite)",
     )
     parser.add_argument(
@@ -69,7 +69,7 @@ def main() -> None:
     if not args.index_dir:
         print("Error: --index-dir is required")
         print(
-            "Usage: python run_web.py --index-dir <path/to/index> [--host HOST] [--port PORT] [--debug]"
+            "Usage: python backend/app.py --index-dir <path/to/index> [--host HOST] [--port PORT] [--debug]"
         )
         sys.exit(1)
 
