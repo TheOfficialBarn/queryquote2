@@ -35,6 +35,7 @@ from .types import SearchResult, TranscriptDetail, TranscriptMovie
 
 
 DEFAULT_TIMING_LOG_PATH = Path(__file__).resolve().parents[3] / "test" / "time-logs" / "times-v1.txt"
+# These caps keep candidate generation and reranking bounded on large corpora.
 MAX_BM25_CANDIDATES = 10000
 RERANK_POOL_SIZE = 500
 MAX_SEED_TERMS = 8
@@ -51,6 +52,7 @@ EXACT_AUTHORITY_BOOST = 0.35
 
 
 @dataclass(slots=True)
+# Lightweight per-query timing collector used for offline diagnostics.
 class _QueryTimingLog:
     query: str
     authority_filter: bool = False
@@ -95,6 +97,7 @@ def _record_timing(
 
 
 def _connect(db_path: str | Path) -> sqlite3.Connection:
+    # Use WAL and relaxed sync settings so indexing/search stays responsive.
     conn = sqlite3.connect(str(db_path))
     conn.execute("PRAGMA journal_mode = WAL")
     conn.execute("PRAGMA synchronous = NORMAL")
@@ -103,6 +106,7 @@ def _connect(db_path: str | Path) -> sqlite3.Connection:
 
 
 def _create_schema(conn: sqlite3.Connection) -> None:
+    # Legacy index layout: raw passages, token stats, and inverted postings.
     conn.executescript(
         """
         CREATE TABLE IF NOT EXISTS passages (
@@ -169,6 +173,7 @@ def build_sqlite_index(
     files_seen = 0
     start = time.time()
 
+    # Build the index file-by-file, but buffer inserts so SQLite writes happen in batches.
     for file_path in iter_transcript_files(data_dir):
         files_seen += 1
         text = Path(file_path).read_text(encoding="utf-8", errors="ignore")
@@ -183,6 +188,7 @@ def build_sqlite_index(
             passage_id = f"{movie_id}::p{i:04d}"
             insert_passages.append((passage_id, movie_id, str(file_path), chunk))
 
+            # Token positions are stored so later phrase checks can be exact.
             tokens = tokenize(chunk, remove_stopwords=True)
             doc_len = len(tokens)
             insert_doc_stats.append((passage_id, doc_len))
@@ -362,6 +368,7 @@ def _bm25_scores_from_conn(
     if not term_stats:
         return {}
 
+    # Seed BM25 from the rarest terms first so we avoid scoring the full corpus.
     seed_terms = _select_bm25_seed_terms(term_stats)
     candidate_scores: defaultdict[str, float] = defaultdict(float)
     average_length = avg_doc_len or 1.0
@@ -383,6 +390,7 @@ def _bm25_scores_from_conn(
     if not candidate_scores:
         return {}
 
+    # Only the highest-scoring candidates get full BM25 evaluation.
     candidate_ids = _top_candidate_ids(candidate_scores, max_candidates=MAX_BM25_CANDIDATES)
     scoring_terms = seed_terms
     term_placeholders = ",".join("?" for _ in scoring_terms)
@@ -412,6 +420,7 @@ def _bm25_scores_from_conn(
 
 
 def _select_bm25_seed_terms(term_stats: dict[str, tuple[int, float, int]]) -> list[str]:
+    # Prefer the least frequent terms because they narrow candidate lookup fastest.
     terms_by_rarity = sorted(term_stats, key=lambda term: term_stats[term][2])
     seed_terms = [
         term
@@ -463,6 +472,7 @@ def _exact_phrase_candidate_ids_from_conn(
     if not term_stats:
         return []
 
+    # Start from the rarest term so we only inspect passages that are most likely to contain the full phrase.
     rarest_term = min(term_stats, key=lambda term: term_stats[term])
     rows = conn.execute(
         """
@@ -478,6 +488,7 @@ def _exact_phrase_candidate_ids_from_conn(
     exact_phrase_ids: list[str] = []
     query_term_set = set(query_terms)
     for passage_id, raw_text in rows:
+        # Re-tokenize the raw passage text so phrase recovery works even if the candidate set missed it.
         positions_by_term: dict[str, list[int]] = defaultdict(list)
         for position, term in enumerate(tokenize(raw_text, remove_stopwords=True)):
             if term in query_term_set:
@@ -702,6 +713,7 @@ class SQLiteSearchEngine:
         if not has_searchable_query:
             return []
 
+        # BM25 gets the first pass because it is cheap and narrows the search space quickly.
         started_at = time.perf_counter()
         bm25_scores: dict[str, float] = defaultdict(float)
         qtf = Counter(query_terms)
@@ -721,6 +733,7 @@ class SQLiteSearchEngine:
         )
         _record_timing(timing, "Fetch postings and compute BM25 scores", started_at)
 
+        # Keep a smaller rerank pool for the more expensive quote-aware scoring step.
         started_at = time.perf_counter()
         has_bm25_scores = bool(bm25_scores)
         _record_timing(timing, "Validate BM25 candidate scores", started_at)
@@ -744,6 +757,7 @@ class SQLiteSearchEngine:
         _record_timing(timing, "Check rerank pool for exact phrase candidates", started_at)
 
         started_at = time.perf_counter()
+        # If the top rerank pool misses a strong exact phrase, fall back to a broader scan.
         has_authoritative_exact = any(
             (
                 self.authority_index.multiplier_for_movie_id(
@@ -770,6 +784,7 @@ class SQLiteSearchEngine:
         # Use heapq for efficient top-k selection instead of sorting all docs.
 
         started_at = time.perf_counter()
+        # Exact phrase hits are ranked ahead of the general BM25 pool, then deduplicated.
         exact_phrase_ids = sorted(
             set(exact_phrase_ids),
             key=lambda passage_id: (
@@ -798,6 +813,7 @@ class SQLiteSearchEngine:
             _record_timing(timing, "Build rerank SQL placeholders", started_at)
 
             started_at = time.perf_counter()
+            # Pull stored token positions so phrase, proximity, and coverage scores stay exact.
             positions_map: dict[str, dict[str, list[int]]] = defaultdict(dict)
             rows = conn.execute(
                 f"""
@@ -813,6 +829,7 @@ class SQLiteSearchEngine:
             _record_timing(timing, "Fetch and decode rerank term positions", started_at)
 
             started_at = time.perf_counter()
+            # Fetch the raw passages once so fuzzy matching and snippet generation use the original text.
             passage_rows = conn.execute(
                 f"""
                 SELECT passage_id, movie_id, source_file, raw_text
@@ -832,6 +849,7 @@ class SQLiteSearchEngine:
                     continue
                 _, _, _, raw_text = info
                 pos = positions_map.get(doc_id, {})
+                # Combine exact phrase, proximity, coverage, fuzzy similarity, and authority signal.
                 phrase = 1.0 if _has_exact_phrase_from_positions(query_terms, pos) else 0.0
                 prox = _proximity_score_from_positions(query_terms, pos)
                 coverage = _query_term_coverage(query_terms, pos)
