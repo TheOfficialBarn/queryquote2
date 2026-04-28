@@ -7,8 +7,8 @@
  * Prologue:
  * Shared search results experience for QueryQuote route pages.
  * 
- * Last updated: 2026-04-27 - Added reusable mutually exclusive decade and
- * genre dropdown filters for compact quote-search layouts.
+ * Last updated: 2026-04-27 - Matched Authority and Legacy controls to the
+ * reusable compact filter toggle styling.
  */
 
 import { useEffect, useMemo, useState } from "react";
@@ -278,8 +278,8 @@ function TopSearchBar({
             onClick={() => onAuthorityFilterChange(!authorityFilter)}
             className={`rounded-full border px-3 py-1 text-sm transition-colors active:scale-95 ${
               authorityFilter
-                ? "border-emerald-300/70 bg-emerald-400/60"
-                : "border-white/20 bg-emerald-700/30 hover:bg-emerald-500/60 "
+                ? "border-blue-300/80 bg-blue-400/30 text-white"
+                : "border-white/20 bg-white/10 text-white/85 hover:bg-white/20"
             }`}
             aria-pressed={authorityFilter}
           >
@@ -290,7 +290,7 @@ function TopSearchBar({
             onClick={() => onLegacySearchChange(!legacySearch)}
             className={`rounded-full border px-3 py-1 text-sm transition-colors active:scale-95 ${
               legacySearch
-                ? "border-amber-300/70 bg-amber-400/55 text-black"
+                ? "border-blue-300/80 bg-blue-400/30 text-white"
                 : "border-white/20 bg-white/10 text-white/85 hover:bg-white/20"
             }`}
             aria-pressed={legacySearch}

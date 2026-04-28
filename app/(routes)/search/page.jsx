@@ -7,8 +7,8 @@
  * Prologue:
  * Search route UI for quote discovery with a search-first experience and quick filters.
  * 
- * Last updated: 2026-04-27 - Added mutually exclusive transcript metadata
- * dropdown filters so quote searches narrow without expanding the layout.
+ * Last updated: 2026-04-27 - Matched Authority and Legacy controls to the
+ * compact dropdown toggle style used by search metadata filters.
  */
 
 import { Suspense, useState } from "react";
@@ -37,22 +37,19 @@ const tickerQuotes = [
 ];
 
 // Renders landing-page binary search option toggles before the first request.
-function SearchOptionToggle({ enabled, onChange, label, description, enabledClassName }) {
+function SearchOptionToggle({ enabled, onChange, label }) {
   return (
     <button
       type="button"
       onClick={() => onChange(!enabled)}
-      className={`mt-4 rounded-2xl border px-4 py-3 text-left transition-colors ${
+      className={`rounded-full border px-3 py-1 text-sm transition-colors active:scale-95 ${
         enabled
-          ? enabledClassName
+          ? "border-blue-300/80 bg-blue-400/30 text-white"
           : "border-white/15 bg-white/5 text-white/85 hover:bg-white/10"
       }`}
       aria-pressed={enabled}
     >
-      <span className="block text-sm font-semibold">{label}</span>
-      <span className="mt-1 block text-xs text-white/70">
-        {description}
-      </span>
+      {label}
     </button>
   );
 }
@@ -167,23 +164,17 @@ function SearchLandingPage() {
               </button>
             </div>
             {/* Search option toggles */}
-            <div className="flex flex-wrap justify-center gap-3">
+            <div className="mt-3 flex flex-wrap justify-center gap-2">
               <SearchOptionToggle
                 enabled={useAuthorityFilter}
                 onChange={setUseAuthorityFilter}
                 label="Authority filter"
-                description="Boost movies with more Metacritic votes and lower sparse-review matches."
-                enabledClassName="border-emerald-300/60 bg-emerald-300/15 text-white"
               />
               <SearchOptionToggle
                 enabled={useLegacySearch}
                 onChange={setUseLegacySearch}
                 label="Legacy Search"
-                description="Use the original v1 index instead of the default v2 search."
-                enabledClassName="border-amber-300/70 bg-amber-300/20 text-white"
               />
-            </div>
-            <div className="mt-3 flex flex-wrap justify-center gap-2">
               <SearchFilterDropdown
                 label="Decades"
                 options={decadeFilterOptions}
