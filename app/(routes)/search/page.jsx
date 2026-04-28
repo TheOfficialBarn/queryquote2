@@ -7,8 +7,8 @@
  * Prologue:
  * Search route UI for quote discovery with a search-first experience and quick filters.
  * 
- * Last updated: 2026-04-27 - Added a Legacy Search toggle so users can
- * compare v1 against the default v2 search path from the frontend.
+ * Last updated: 2026-04-27 - Added mutually exclusive transcript metadata
+ * dropdown filters so quote searches narrow without expanding the layout.
  */
 
 import { Suspense, useState } from "react";
@@ -18,6 +18,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import SearchResultsView, {
   buildSearchResultsUrl,
   normalizeSearchPage,
+  SearchFilterDropdown,
+  useTranscriptFilterOptions,
 } from "../_components/SearchResultsView";
 
 // Queryquote font
@@ -57,9 +59,13 @@ function SearchOptionToggle({ enabled, onChange, label, description, enabledClas
 
 function SearchLandingPage() {
   const router = useRouter();
+  const { decadeFilterOptions, genreFilterOptions } = useTranscriptFilterOptions();
   const [query, setQuery] = useState("");
   const [useAuthorityFilter, setUseAuthorityFilter] = useState(false);
   const [useLegacySearch, setUseLegacySearch] = useState(false);
+  const [activeDecades, setActiveDecades] = useState([]);
+  const [activeGenres, setActiveGenres] = useState([]);
+  const [openFilterDropdown, setOpenFilterDropdown] = useState(null);
 
   async function handleSearch(event) {
     event.preventDefault();
@@ -74,9 +80,24 @@ function SearchLandingPage() {
         query: trimmedQuery,
         authorityFilter: useAuthorityFilter,
         legacySearch: useLegacySearch,
+        decades: activeDecades,
+        genres: activeGenres,
       }),
     );
   }
+
+  function toggleFilterValue(values, nextValue) {
+    return values.includes(nextValue)
+      ? values.filter((value) => value !== nextValue)
+      : [...values, nextValue];
+  }
+
+  function clearFilters() {
+    setActiveDecades([]);
+    setActiveGenres([]);
+  }
+
+  const hasActiveMetadataFilters = activeDecades.length > 0 || activeGenres.length > 0;
 
   return (
     <main>
@@ -162,6 +183,33 @@ function SearchLandingPage() {
                 enabledClassName="border-amber-300/70 bg-amber-300/20 text-white"
               />
             </div>
+            <div className="mt-3 flex flex-wrap justify-center gap-2">
+              <SearchFilterDropdown
+                label="Decades"
+                options={decadeFilterOptions}
+                selectedValues={activeDecades}
+                isOpen={openFilterDropdown === "decades"}
+                onOpenChange={(isOpen) => setOpenFilterDropdown(isOpen ? "decades" : null)}
+                onToggle={(value) => setActiveDecades((values) => toggleFilterValue(values, value))}
+              />
+              <SearchFilterDropdown
+                label="Genres"
+                options={genreFilterOptions}
+                selectedValues={activeGenres}
+                isOpen={openFilterDropdown === "genres"}
+                onOpenChange={(isOpen) => setOpenFilterDropdown(isOpen ? "genres" : null)}
+                onToggle={(value) => setActiveGenres((values) => toggleFilterValue(values, value))}
+              />
+              {hasActiveMetadataFilters ? (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="rounded-full border border-white/20 bg-white/5 px-3 py-1 text-sm text-white/70 transition-colors hover:bg-white/15"
+                >
+                  Clear filters
+                </button>
+              ) : null}
+            </div>
           </form>
         </section>
       </div>
@@ -177,7 +225,9 @@ function SearchPageContent() {
   const initialPage = normalizeSearchPage(searchParams.get("page"));
   const initialAuthorityFilter = searchParams.get("authority_filter") === "true";
   const initialIndexVersion = searchParams.get("index_version") === "v1" ? "v1" : "v2";
-  const pageStateKey = `${initialQuery}-${initialAuthorityFilter}-${initialIndexVersion}`;
+  const initialDecades = searchParams.getAll("decade");
+  const initialGenres = searchParams.getAll("genre");
+  const pageStateKey = `${initialQuery}-${initialAuthorityFilter}-${initialIndexVersion}-${initialDecades.join("|")}-${initialGenres.join("|")}`;
 
   if (initialQuery.trim()) {
     return (
@@ -188,6 +238,8 @@ function SearchPageContent() {
         initialPage={initialPage}
         initialAuthorityFilter={initialAuthorityFilter}
         initialIndexVersion={initialIndexVersion}
+        initialDecades={initialDecades}
+        initialGenres={initialGenres}
       />
     );
   }

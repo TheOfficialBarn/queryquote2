@@ -7,8 +7,8 @@
  * Prologue:
  * Shared search results experience for QueryQuote route pages.
  * 
- * Last updated: 2026-04-27 - Made quote result cards link to their movie's
- * transcript detail page using the indexed movie_id.
+ * Last updated: 2026-04-27 - Added reusable mutually exclusive decade and
+ * genre dropdown filters for compact quote-search layouts.
  */
 
 import { useEffect, useMemo, useState } from "react";
@@ -28,6 +28,73 @@ export const defaultSearchTopK = 50;
 export const searchResultsPerPage = 25;
 
 
+function decadeLabel(decade) {
+  return `${String(decade).slice(0, 3)}0s`;
+}
+
+
+function normalizeFilterValues(values) {
+  return values
+    .map((value) => String(value).trim())
+    .filter(Boolean);
+}
+
+
+export function useTranscriptFilterOptions() {
+  const [decadeFilterOptions, setDecadeFilterOptions] = useState([]);
+  const [genreFilterOptions, setGenreFilterOptions] = useState([]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function fetchTranscriptFacets() {
+      try {
+        const response = await fetch("/api/transcripts?facets=true&index_version=v2", {
+          signal: controller.signal,
+          cache: "no-store",
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data?.error || "Transcript facets failed");
+        }
+
+        const decades = Array.isArray(data.decades) ? data.decades : [];
+        setDecadeFilterOptions(
+          decades.map((decade) => ({
+            id: `${decade}s`,
+            label: decadeLabel(decade),
+            value: String(decade),
+          })),
+        );
+
+        const genres = Array.isArray(data.genres) ? data.genres : [];
+        setGenreFilterOptions(
+          genres.map((genre) => ({
+            id: `genre-${genre}`,
+            label: genre,
+            value: genre,
+          })),
+        );
+      } catch (error) {
+        if (error.name === "AbortError") {
+          return;
+        }
+
+        setDecadeFilterOptions([]);
+        setGenreFilterOptions([]);
+      }
+    }
+
+    fetchTranscriptFacets();
+
+    return () => controller.abort();
+  }, []);
+
+  return { decadeFilterOptions, genreFilterOptions };
+}
+
+
 // Normalizes any page value from the URL into the supported search result pages.
 export function normalizeSearchPage(value) {
   const parsed = Number(value);
@@ -42,6 +109,8 @@ export function buildSearchResultsUrl({
   page = 1,
   authorityFilter,
   legacySearch = false,
+  decades = [],
+  genres = [],
   pathname = "/search",
 }) {
   const params = new URLSearchParams({
@@ -53,6 +122,9 @@ export function buildSearchResultsUrl({
   if (authorityFilter) {
     params.set("authority_filter", "true");
   }
+
+  normalizeFilterValues(decades).forEach((decade) => params.append("decade", decade));
+  normalizeFilterValues(genres).forEach((genre) => params.append("genre", genre));
 
   return `${pathname}?${params.toString()}`;
 }
@@ -81,19 +153,87 @@ function SearchIcon() {
 }
 
 
+// Renders a compact controlled multi-select dropdown for metadata filters
+// shared by the landing and results search bars.
+export function SearchFilterDropdown({
+  label,
+  options,
+  selectedValues,
+  isOpen,
+  onOpenChange,
+  onToggle,
+}) {
+  const selectedCount = selectedValues.length;
+
+  return (
+    <details className="relative" open={isOpen}>
+      <summary
+        className="flex cursor-pointer list-none items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-sm text-white/85 transition-colors hover:bg-white/20 [&::-webkit-details-marker]:hidden"
+        onClick={(event) => {
+          event.preventDefault();
+          onOpenChange(!isOpen);
+        }}
+      >
+        <span>{label}</span>
+        {selectedCount ? (
+          <span className="rounded-full bg-blue-400/25 px-1.5 py-0.5 text-xs text-blue-100">
+            {selectedCount}
+          </span>
+        ) : null}
+      </summary>
+      <div className="absolute left-0 top-full z-30 mt-2 max-h-64 w-56 overflow-y-auto rounded-xl border border-white/15 bg-neutral-950 p-2 shadow-xl shadow-black/40">
+        {options.length ? (
+          options.map((option) => {
+            const active = selectedValues.includes(option.value);
+            return (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => onToggle(option.value)}
+                className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                  active
+                    ? "bg-blue-400/25 text-white"
+                    : "text-white/80 hover:bg-white/10"
+                }`}
+                aria-pressed={active}
+              >
+                <span>{option.label}</span>
+                <span className="text-xs text-blue-200">{active ? "Selected" : ""}</span>
+              </button>
+            );
+          })
+        ) : (
+          <p className="px-3 py-2 text-sm text-white/55">No filters loaded</p>
+        )}
+      </div>
+    </details>
+  );
+}
+
+
 // Renders the sticky results-page search bar, including query input, search
 // button, search mode controls, and query duration display.
 function TopSearchBar({
   query,
   authorityFilter,
   legacySearch,
+  activeDecades,
+  activeGenres,
+  decadeFilterOptions,
+  genreFilterOptions,
   isSearching,
   queryDurationMs,
   onQueryChange,
   onAuthorityFilterChange,
   onLegacySearchChange,
+  onDecadeToggle,
+  onGenreToggle,
+  onClearFilters,
   onSubmit,
 }) {
+  const hasActiveMetadataFilters = activeDecades.length > 0 || activeGenres.length > 0;
+  const [openFilterDropdown, setOpenFilterDropdown] = useState(null);
+
   return (
     <header className="sticky top-0 z-20 border-b border-white/15 bg-black/50 backdrop-blur-sm">
       <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-4 px-4 py-4 sm:px-6 lg:grid-cols-[1fr_325px] lg:items-end">
@@ -157,6 +297,31 @@ function TopSearchBar({
           >
             Legacy Search
           </button>
+          <SearchFilterDropdown
+            label="Decades"
+            options={decadeFilterOptions}
+            selectedValues={activeDecades}
+            isOpen={openFilterDropdown === "decades"}
+            onOpenChange={(isOpen) => setOpenFilterDropdown(isOpen ? "decades" : null)}
+            onToggle={onDecadeToggle}
+          />
+          <SearchFilterDropdown
+            label="Genres"
+            options={genreFilterOptions}
+            selectedValues={activeGenres}
+            isOpen={openFilterDropdown === "genres"}
+            onOpenChange={(isOpen) => setOpenFilterDropdown(isOpen ? "genres" : null)}
+            onToggle={onGenreToggle}
+          />
+          {hasActiveMetadataFilters ? (
+            <button
+              type="button"
+              onClick={onClearFilters}
+              className="rounded-full border border-white/20 bg-white/5 px-3 py-1 text-sm text-white/70 transition-colors hover:bg-white/15"
+            >
+              Clear filters
+            </button>
+          ) : null}
         </div>
       </div>
     </header>
@@ -283,16 +448,23 @@ export default function SearchResultsView({
   initialPage = 1,
   initialAuthorityFilter,
   initialIndexVersion = "v2",
+  initialDecades = [],
+  initialGenres = [],
   pathname = "/search",
 }) {
   const router = useRouter();
+  const { decadeFilterOptions, genreFilterOptions } = useTranscriptFilterOptions();
   const [query, setQuery] = useState(initialQuery);
   const [authorityFilter, setAuthorityFilter] = useState(initialAuthorityFilter);
   const [legacySearch, setLegacySearch] = useState(initialIndexVersion === "v1");
+  const [activeDecades, setActiveDecades] = useState(initialDecades);
+  const [activeGenres, setActiveGenres] = useState(initialGenres);
   const [responseData, setResponseData] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [queryDurationMs, setQueryDurationMs] = useState(null);
+  const initialDecadeKey = initialDecades.join("|");
+  const initialGenreKey = initialGenres.join("|");
 
   useEffect(() => {
     if (!initialQuery.trim()) {
@@ -305,6 +477,8 @@ export default function SearchResultsView({
     // Fetches search results for the current URL query while updating loading,
     // error, result, and timer state.
     async function fetchResults() {
+      const requestDecades = initialDecadeKey ? initialDecadeKey.split("|") : [];
+      const requestGenres = initialGenreKey ? initialGenreKey.split("|") : [];
       const startedAt = performance.now();
       const timerId = window.setInterval(() => {
         setQueryDurationMs(performance.now() - startedAt);
@@ -325,6 +499,8 @@ export default function SearchResultsView({
             top_k: defaultSearchTopK,
             authority_filter: initialAuthorityFilter,
             index_version: initialIndexVersion,
+            decades: requestDecades,
+            genres: requestGenres,
           }),
           signal: controller.signal,
         });
@@ -356,7 +532,7 @@ export default function SearchResultsView({
     fetchResults();
 
     return () => controller.abort();
-  }, [initialAuthorityFilter, initialIndexVersion, initialQuery]);
+  }, [initialAuthorityFilter, initialDecadeKey, initialGenreKey, initialIndexVersion, initialQuery]);
 
   const results = responseData?.results ?? [];
   const resultCount = typeof responseData?.count === "number" ? responseData.count : 0;
@@ -377,9 +553,11 @@ export default function SearchResultsView({
 
     const indexLabel = responseData?.index_version === "v1" ? " with legacy search" : "";
     const filterLabel = responseData?.authority_filter ? " with authority filter" : "";
+    const metadataFilterCount = initialDecades.length + initialGenres.length;
+    const metadataFilterLabel = metadataFilterCount > 0 ? ` with ${metadataFilterCount} metadata filter${metadataFilterCount === 1 ? "" : "s"}` : "";
     const pageLabel = resultCount > searchResultsPerPage ? `, page ${currentPage} of ${pageCount}` : "";
-    return `${resultCount} result${resultCount === 1 ? "" : "s"}${indexLabel}${filterLabel}${pageLabel}`;
-  }, [currentPage, initialQuery, isSearching, pageCount, responseData?.authority_filter, responseData?.index_version, resultCount]);
+    return `${resultCount} result${resultCount === 1 ? "" : "s"}${indexLabel}${filterLabel}${metadataFilterLabel}${pageLabel}`;
+  }, [currentPage, initialDecades.length, initialGenres.length, initialQuery, isSearching, pageCount, responseData?.authority_filter, responseData?.index_version, resultCount]);
 
 
   // Handles a new search from the sticky search bar by validating
@@ -391,7 +569,16 @@ export default function SearchResultsView({
       return;
     }
 
-    router.push(buildSearchResultsUrl({ query, authorityFilter, legacySearch, pathname }));
+    router.push(
+      buildSearchResultsUrl({
+        query,
+        authorityFilter,
+        legacySearch,
+        decades: activeDecades,
+        genres: activeGenres,
+        pathname,
+      }),
+    );
   }
 
 
@@ -404,9 +591,18 @@ export default function SearchResultsView({
         page,
         authorityFilter: initialAuthorityFilter,
         legacySearch: initialIndexVersion === "v1",
+        decades: initialDecades,
+        genres: initialGenres,
         pathname,
       }),
     );
+  }
+
+
+  function toggleFilterValue(values, nextValue) {
+    return values.includes(nextValue)
+      ? values.filter((value) => value !== nextValue)
+      : [...values, nextValue];
   }
 
   return (
@@ -415,11 +611,21 @@ export default function SearchResultsView({
         query={query}
         authorityFilter={authorityFilter}
         legacySearch={legacySearch}
+        activeDecades={activeDecades}
+        activeGenres={activeGenres}
+        decadeFilterOptions={decadeFilterOptions}
+        genreFilterOptions={genreFilterOptions}
         isSearching={isSearching}
         queryDurationMs={queryDurationMs}
         onQueryChange={setQuery}
         onAuthorityFilterChange={setAuthorityFilter}
         onLegacySearchChange={setLegacySearch}
+        onDecadeToggle={(value) => setActiveDecades((values) => toggleFilterValue(values, value))}
+        onGenreToggle={(value) => setActiveGenres((values) => toggleFilterValue(values, value))}
+        onClearFilters={() => {
+          setActiveDecades([]);
+          setActiveGenres([]);
+        }}
         onSubmit={handleSubmit}
       />
 

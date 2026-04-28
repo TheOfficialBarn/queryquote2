@@ -5,8 +5,8 @@ Class: EECS 767 IR (Class Project)
 Prologue:
 CSV-backed authority scoring for opt-in movie ranking adjustments.
 
-Last updated: 2026-04-27 - Added import comments explaining CSV parsing,
-title normalization, cached loading, and authority record typing dependencies.
+Last updated: 2026-04-27 - Added authority genre lookups so legacy search can
+share the transcript browser's metadata filters.
 """
 
 from __future__ import annotations  # Allows forward-looking type hints without runtime overhead.
@@ -46,6 +46,7 @@ class AuthorityRecord:
     votes: int
     multiplier: float
     release_year: str | None = None
+    genres: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,8 +61,8 @@ class AuthorityIndex:
         """Return a no-op index when the CSV is missing or has no valid rows."""
         return cls(by_title={}, by_title_year={})
 
-    def multiplier_for_movie_id(self, movie_id: str) -> float | None:
-        """Find the authority multiplier for one transcript movie ID."""
+    def record_for_movie_id(self, movie_id: str) -> AuthorityRecord | None:
+        """Find the authority row for one transcript movie ID."""
         title, year = split_movie_id(movie_id)
         title_key = normalize_title(title)
         if not title_key:
@@ -75,8 +76,26 @@ class AuthorityIndex:
 
         # Fall back to title-only matches only when build_authority_index found
         # the title to be unambiguous across release years.
-        record = self.by_title.get(title_key)
+        return self.by_title.get(title_key)
+
+    def multiplier_for_movie_id(self, movie_id: str) -> float | None:
+        """Find the authority multiplier for one transcript movie ID."""
+        record = self.record_for_movie_id(movie_id)
         return record.multiplier if record is not None else None
+
+    def genres_for_movie_id(self, movie_id: str) -> list[str]:
+        """Find Metacritic genres for one transcript movie ID."""
+        record = self.record_for_movie_id(movie_id)
+        return list(record.genres) if record is not None else []
+
+    def all_genres(self) -> list[str]:
+        """List every genre available in this authority index."""
+        genres = {
+            genre
+            for record in [*self.by_title.values(), *self.by_title_year.values()]
+            for genre in record.genres
+        }
+        return sorted(genres, key=str.casefold)
 
 
 def normalize_title(value: str) -> str:
@@ -125,6 +144,7 @@ def build_authority_index(rows: Iterable[dict[str, str]]) -> AuthorityIndex:
                     votes=votes,
                     multiplier=1.0,
                     release_year=parse_release_year(row.get("Release Date", "")),
+                    genres=tuple(_split_genres(row.get("Genres"))),
                 ),
                 years,
             )
@@ -144,6 +164,7 @@ def build_authority_index(rows: Iterable[dict[str, str]]) -> AuthorityIndex:
             votes=record.votes,
             multiplier=multiplier,
             release_year=record.release_year,
+            genres=record.genres,
         )
         title_key = normalize_title(record.title)
         if not title_key:
@@ -228,3 +249,11 @@ def _store_highest_vote_record(
     current = records.get(key)
     if current is None or record.votes > current.votes:
         records[key] = record
+
+
+def _split_genres(value: str | None) -> list[str]:
+    """Split the compact CSV genre column without importing transcript helpers."""
+    if not value:
+        return []
+
+    return [genre.strip() for genre in value.split(",") if genre.strip()]

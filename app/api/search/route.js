@@ -5,8 +5,8 @@
  * Prologue:
  * Server-side proxy route for quote search requests from the Next.js frontend.
  * 
- * Last updated: 2026-04-27 - Defaults frontend searches to v2 while still
- * passing Legacy Search v1 requests and Authority Boost through to Flask.
+ * Last updated: 2026-04-27 - Passes search decade and genre dropdown filters
+ * through to Flask with the existing Authority Boost and Legacy Search options.
  */
 
 import { NextResponse } from "next/server";
@@ -17,6 +17,16 @@ const DEFAULT_BACKEND_BASE_URL = "http://127.0.0.1:5000";
 // Amount of Search Results we want fetched
 const DEFAULT_TOP_K = 50;
 
+function normalizedStringArray(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((entry) => String(entry).trim())
+    .filter(Boolean);
+}
+
 export async function POST(request) {
   try {
     const body = await request.json(); // Query body
@@ -24,6 +34,8 @@ export async function POST(request) {
     const topK = Number.isInteger(body?.top_k) ? body.top_k : DEFAULT_TOP_K; // If topK is in body use it, if not then use DEFAULT_TOP_K
     const authorityFilter = body?.authority_filter === true; // AUTHORITY BOOST (MAY GET RID OF AT SOME POINT)
     const indexVersion = body?.index_version === "v1" ? "v1" : "v2";
+    const decades = normalizedStringArray(body?.decades);
+    const genres = normalizedStringArray(body?.genres);
 
     // Front-end HAS to provide a query in order to search backend
     if (!query) {
@@ -44,6 +56,8 @@ export async function POST(request) {
         top_k: topK,
         authority_filter: authorityFilter,
         index_version: indexVersion,
+        decades,
+        genres,
       }),
       cache: "no-store",
     });

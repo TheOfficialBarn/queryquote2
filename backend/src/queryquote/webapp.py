@@ -5,8 +5,8 @@ Class: EECS 767 IR (Class Project)
 Prologue:
 API-only Flask application for QueryQuote search endpoints.
 
-Last updated: 2026-04-27 - Added import comments explaining Flask routing,
-index loading, transcript filters, and response shape dependencies.
+Last updated: 2026-04-27 - Added quote-search decade and genre filters so
+the search page can reuse transcript browser metadata facets.
 """
 
 from __future__ import annotations                      # Defers annotations for Flask app factory type hints.
@@ -140,6 +140,8 @@ def create_app(
                 "top_k": 50,  (optional, default 50)
                 "authority_filter": false,  (optional, default false)
                 "index_version": "v1"  (optional, "v1" or "v2")
+                "decades": [1980],  (optional)
+                "genres": ["Comedy"]  (optional)
             }
 
         Returns:
@@ -168,6 +170,10 @@ def create_app(
             top_k = data.get("top_k", DEFAULT_TOP_K)
             authority_filter = data.get("authority_filter") is True
             index_version = data.get("index_version", default_index_version)
+            raw_decades = data.get("decades") if isinstance(data.get("decades"), list) else [data.get("decades")]
+            raw_genres = data.get("genres") if isinstance(data.get("genres"), list) else [data.get("genres")]
+            decades = normalized_transcript_decades(raw_decades)
+            genres = normalized_transcript_genres(raw_genres)
 
             # Reject empty searches early so the engine never receives invalid input.
             if not query:
@@ -193,6 +199,8 @@ def create_app(
                 query,
                 top_k=top_k,
                 authority_filter=authority_filter,
+                decades=decades,
+                genres=genres,
             )
 
             # Return plain JSON primitives so the frontend does not depend on Python types.
@@ -201,6 +209,8 @@ def create_app(
                     "query": query,
                     "index_version": index_version,
                     "authority_filter": authority_filter,
+                    "decades": decades,
+                    "genres": genres,
                     "results": [
                         {
                             "passage_id": r.passage_id,

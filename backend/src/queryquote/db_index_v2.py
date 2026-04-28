@@ -5,8 +5,8 @@ Class: EECS 767 IR (Class Project)
 Prologue:
 SQLite v2 index builder and search engine for QueryQuote transcript experiments.
 
-Last updated: 2026-04-27 - Added import comments explaining v2 indexing,
-authority metadata, reranking, facets, and transcript detail dependencies.
+Last updated: 2026-04-27 - Added decade and genre filtering to quote search
+so the search page can reuse transcript browser facets.
 """
 
 from __future__ import annotations  # Defers annotations for fast import and forward references.
@@ -123,6 +123,11 @@ def _connect(db_path: str | Path) -> sqlite3.Connection:
     conn.execute("PRAGMA temp_store = MEMORY")
     conn.execute("PRAGMA cache_size = -200000")
     return conn
+
+
+def _movie_id_from_passage_id(passage_id: str) -> str:
+    """Recover the indexed movie id from a passage id like Movie::p0001."""
+    return passage_id.rsplit("::", 1)[0]
 
 
 def _create_schema(conn: sqlite3.Connection) -> None:
@@ -1230,12 +1235,57 @@ class SQLiteSearchEngineV2:
 
         return [row[0] for row in rows]
 
+    def _filtered_movie_ids_from_conn(
+        self,
+        conn: sqlite3.Connection,
+        *,
+        decades: list[int] | None = None,
+        genres: list[str] | None = None,
+    ) -> set[str] | None:
+        """Return movie ids matching optional metadata filters, or None when inactive."""
+        selected_decades = decades or []
+        selected_genres = [genre.strip() for genre in (genres or []) if genre.strip()]
+        if not selected_decades and not selected_genres:
+            return None
+
+        where_clauses: list[str] = []
+        params: list[object] = []
+
+        if selected_decades:
+            decade_clauses = [
+                "(CAST(year AS INTEGER) >= ? AND CAST(year AS INTEGER) < ?)"
+                for _ in selected_decades
+            ]
+            where_clauses.append(f"({' OR '.join(decade_clauses)})")
+            for decade in selected_decades:
+                params.extend([decade, decade + 10])
+
+        if selected_genres:
+            genre_clauses = [
+                "(',' || IFNULL(authority_genres, '') || ',') LIKE ? ESCAPE '\\'"
+                for _ in selected_genres
+            ]
+            where_clauses.append(f"({' OR '.join(genre_clauses)})")
+            params.extend(f"%,{escape_sql_like(genre)},%" for genre in selected_genres)
+
+        rows = conn.execute(
+            f"""
+            SELECT movie_id
+            FROM movies
+            WHERE {' AND '.join(where_clauses)}
+            """,
+            tuple(params),
+        ).fetchall()
+        return {row[0] for row in rows}
+
     def search(
         self,
         query: str,
         *,
         top_k: int = DEFAULT_TOP_K,
         authority_filter: bool = False,
+        decades: list[int] | None = None,
+        genres: list[str] | None = None,
     ) -> list[SearchResult]:
         total_started_at = time.perf_counter()
         timing = _QueryTimingLogV2(query=query, authority_filter=authority_filter)
@@ -1249,6 +1299,8 @@ class SQLiteSearchEngineV2:
                 query,
                 top_k=top_k,
                 authority_filter=authority_filter,
+                decades=decades,
+                genres=genres,
                 timing=timing,
             )
         finally:
@@ -1265,6 +1317,8 @@ class SQLiteSearchEngineV2:
         *,
         top_k: int,
         authority_filter: bool,
+        decades: list[int] | None,
+        genres: list[str] | None,
         timing: _QueryTimingLogV2 | None = None,
     ) -> list[SearchResult]:
         started_at = time.perf_counter()
@@ -1280,6 +1334,16 @@ class SQLiteSearchEngineV2:
         _record_timing_v2(timing, "Prepare BM25 query weights", started_at)
 
         started_at = time.perf_counter()
+        allowed_movie_ids = self._filtered_movie_ids_from_conn(
+            conn,
+            decades=decades,
+            genres=genres,
+        )
+        if allowed_movie_ids is not None and not allowed_movie_ids:
+            return []
+        _record_timing_v2(timing, "Resolve metadata filters", started_at)
+
+        started_at = time.perf_counter()
         bm25_scores = (
             _bm25_scores_from_conn(
                 conn,
@@ -1290,6 +1354,12 @@ class SQLiteSearchEngineV2:
             if qtf
             else {}
         )
+        if allowed_movie_ids is not None:
+            bm25_scores = {
+                passage_id: score
+                for passage_id, score in bm25_scores.items()
+                if _movie_id_from_passage_id(passage_id) in allowed_movie_ids
+            }
         _record_timing_v2(timing, "Fetch postings and compute BM25 scores", started_at)
 
         started_at = time.perf_counter()
@@ -1313,6 +1383,12 @@ class SQLiteSearchEngineV2:
         exact_phrase_ids = list(
             dict.fromkeys([*exact_phrase_ids, *recovered_exact_phrase_ids])
         )
+        if allowed_movie_ids is not None:
+            exact_phrase_ids = [
+                passage_id
+                for passage_id in exact_phrase_ids
+                if _movie_id_from_passage_id(passage_id) in allowed_movie_ids
+            ]
         for passage_id in exact_phrase_ids:
             bm25_scores.setdefault(passage_id, 0.0)
         _record_timing_v2(timing, "Recover exact phrase candidates", started_at)

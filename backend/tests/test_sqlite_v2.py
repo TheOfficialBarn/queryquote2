@@ -4,8 +4,8 @@ Class: EECS 767 IR (Class Project)
 
 Prologue:
 Regression coverage for v1/v2 SQLite backend selection and v2 search.
-Last updated: 2026-04-27 - Added import comments explaining the index builders
-and Flask app factory exercised by backend regression tests.
+Last updated: 2026-04-27 - Added quote-search metadata filter coverage for
+the shared decade and genre facets used by the frontend.
 """
 
 from queryquote.db_index import build_sqlite_index          # Builds a temporary v1 index for selection tests.
@@ -229,3 +229,47 @@ def test_transcript_browser_filters_by_decade_and_genre(tmp_path):
     facets_payload = facets_response.get_json()
     assert facets_payload["decades"] == [1980, 1990]
     assert facets_payload["genres"] == ["Comedy", "Horror", "Thriller"]
+
+
+def test_quote_search_filters_by_decade_and_genre(tmp_path):
+    data_dir = tmp_path / "transcripts"
+    _write_transcript(data_dir, "Camp Scare _1984_", "The hidden line says stay by the lake.")
+    _write_transcript(data_dir, "Space Laughs _1994_", "The hidden line says stay by the moon.")
+    authority_csv = tmp_path / "authority.csv"
+    authority_csv.write_text(
+        "\n".join(
+            [
+                "Title,Release Date,Rating,No of Persons Voted,Genres",
+                'Camp Scare,"Oct 12, 1984",6.2,25,"Horror,Thriller"',
+                'Space Laughs,"May 05, 1994",7.1,30,Comedy',
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    index_dir = tmp_path / "v2"
+    build_sqlite_index_v2(
+        data_dir=data_dir,
+        output_dir=index_dir,
+        max_passage_tokens=12,
+        passage_overlap=2,
+        authority_csv_path=authority_csv,
+    )
+
+    client = create_app(str(index_dir), backend="sqlite-v2").test_client()
+    response = client.post(
+        "/api/search",
+        json={
+            "query": "hidden line says stay",
+            "index_version": "v2",
+            "top_k": 10,
+            "decades": [1990],
+            "genres": ["Comedy"],
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["decades"] == [1990]
+    assert payload["genres"] == ["Comedy"]
+    assert [result["movie_id"] for result in payload["results"]] == ["Space Laughs _1994_"]

@@ -5,8 +5,8 @@ Class: EECS 767 IR (Class Project)
 Prologue:
 SQLite-backed indexing and search for large QueryQuote transcript corpora.
 
-Last updated: 2026-04-27 - Added import comments explaining v1 indexing,
-ranking, transcript lookup, and shared result-shape dependencies.
+Last updated: 2026-04-27 - Added decade and genre-aware metadata filtering
+so legacy quote search matches the shared search UI filters.
 """
 
 # (V1 WILL EVENTAULLY BE DEPRECATED IN FAVOR OF DATA2_INTERSECTION ONCE IT'S COMPLETE)
@@ -578,6 +578,7 @@ class SQLiteSearchEngine:
                 where_sql = "WHERE movie_id LIKE ? ESCAPE '\\'"
                 params = (movie_pattern,)
 
+            query_limit = safe_limit if not decades and not genres else max(safe_limit, 10000)
             rows = conn.execute(
                 f"""
                 SELECT movie_id, MIN(source_file) AS source_file
@@ -587,13 +588,15 @@ class SQLiteSearchEngine:
                 ORDER BY movie_id COLLATE NOCASE
                 LIMIT ?
                 """,
-                (*params, safe_limit),
+                (*params, query_limit),
             ).fetchall()
         finally:
             conn.close()
 
         movies: list[TranscriptMovie] = []
         for movie_id, source_file in rows:
+            if not self._movie_matches_filters(movie_id, decades=decades, genres=genres):
+                continue
             title, year = split_movie_id(movie_id)
             movies.append(
                 TranscriptMovie(
@@ -601,9 +604,11 @@ class SQLiteSearchEngine:
                     title=title,
                     year=year,
                     source_file=source_file,
-                    genres=[],
+                    genres=self.authority_index.genres_for_movie_id(movie_id),
                 )
             )
+            if len(movies) >= safe_limit:
+                break
         return movies
 
     def get_transcript(self, movie_id: str) -> TranscriptDetail | None:
@@ -665,7 +670,35 @@ class SQLiteSearchEngine:
 
     def list_transcript_genres(self) -> list[str]:
         """List genres available to v1 transcript browsing."""
-        return []
+        return self.authority_index.all_genres()
+
+    def _movie_matches_filters(
+        self,
+        movie_id: str,
+        *,
+        decades: list[int] | None = None,
+        genres: list[str] | None = None,
+    ) -> bool:
+        """Check v1 movie ids and authority metadata against shared filters."""
+        selected_decades = decades or []
+        selected_genres = [genre.strip().casefold() for genre in (genres or []) if genre.strip()]
+        if selected_decades:
+            _, year = split_movie_id(movie_id)
+            if year is None or not year.isdigit():
+                return False
+            movie_decade = (int(year) // 10) * 10
+            if movie_decade not in selected_decades:
+                return False
+
+        if selected_genres:
+            movie_genres = {
+                genre.casefold()
+                for genre in self.authority_index.genres_for_movie_id(movie_id)
+            }
+            if not movie_genres.intersection(selected_genres):
+                return False
+
+        return True
 
     def search(
         self,
@@ -673,6 +706,8 @@ class SQLiteSearchEngine:
         *,
         top_k: int = DEFAULT_TOP_K,
         authority_filter: bool = False,
+        decades: list[int] | None = None,
+        genres: list[str] | None = None,
     ) -> list[SearchResult]:
         """Search query using a thread-local database connection."""
         total_started_at = time.perf_counter()
@@ -687,6 +722,8 @@ class SQLiteSearchEngine:
                 query,
                 top_k=top_k,
                 authority_filter=authority_filter,
+                decades=decades,
+                genres=genres,
                 timing=timing,
             )
         finally:
@@ -703,6 +740,8 @@ class SQLiteSearchEngine:
         *,
         top_k: int = DEFAULT_TOP_K,
         authority_filter: bool = False,
+        decades: list[int] | None = None,
+        genres: list[str] | None = None,
         timing: _QueryTimingLog | None = None,
     ) -> list[SearchResult]:
         started_at = time.perf_counter()
@@ -733,6 +772,16 @@ class SQLiteSearchEngine:
             avg_doc_len=self.avg_doc_len,
             max_postings_per_term=MAX_POSTINGS_PER_TERM,
         )
+        if decades or genres:
+            bm25_scores = {
+                passage_id: score
+                for passage_id, score in bm25_scores.items()
+                if self._movie_matches_filters(
+                    _movie_id_from_passage_id(passage_id),
+                    decades=decades,
+                    genres=genres,
+                )
+            }
         _record_timing(timing, "Fetch postings and compute BM25 scores", started_at)
 
         # Keep a smaller rerank pool for the more expensive quote-aware scoring step.
@@ -756,6 +805,16 @@ class SQLiteSearchEngine:
             query_terms,
             preliminary_rerank_ids,
         )
+        if decades or genres:
+            exact_phrase_ids = [
+                passage_id
+                for passage_id in exact_phrase_ids
+                if self._movie_matches_filters(
+                    _movie_id_from_passage_id(passage_id),
+                    decades=decades,
+                    genres=genres,
+                )
+            ]
         _record_timing(timing, "Check rerank pool for exact phrase candidates", started_at)
 
         started_at = time.perf_counter()
@@ -775,6 +834,16 @@ class SQLiteSearchEngine:
                 conn,
                 query_terms,
             )
+            if decades or genres:
+                recovered_exact_phrase_ids = [
+                    passage_id
+                    for passage_id in recovered_exact_phrase_ids
+                    if self._movie_matches_filters(
+                        _movie_id_from_passage_id(passage_id),
+                        decades=decades,
+                        genres=genres,
+                    )
+                ]
             exact_phrase_ids = list(
                 dict.fromkeys([*exact_phrase_ids, *recovered_exact_phrase_ids])
             )
