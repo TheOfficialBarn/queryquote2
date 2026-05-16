@@ -1,0 +1,5 @@
+case_id,quote,expected_movie,variant,index_version,authority_boost,p_at_10_placement,time_seconds,top_movie_id,top_passage_id,result_count
+1,I'm gonna make him an offer he can't refuse.,The Godfather,v1,v1,False,FALSE,6.961925,Our Futures _2015_,Our Futures _2015_::p0055,10
+1,I'm gonna make him an offer he can't refuse.,The Godfather,v1_authority,v1,True,FALSE,6.990435,Our Futures _2015_,Our Futures _2015_::p0055,10
+1,I'm gonna make him an offer he can't refuse.,The Godfather,v2,v2,False,9,6.408387,Angel-A _2005_,Angel-A _2005_::p0031,10
+1,I'm gonna make him an offer he can't refuse.,The Godfather,v2_authority,v2,True,4,6.389675,Angel-A _2005_,Angel-A _2005_::p0031,10

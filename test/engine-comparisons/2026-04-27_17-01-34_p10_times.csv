@@ -1,0 +1,85 @@
+case_id,quote,expected_movie,variant,index_version,authority_boost,p_at_10_placement,time_seconds,top_movie_id,top_passage_id,result_count
+1,I'm gonna make him an offer he can't refuse.,The Godfather,v1,v1,False,FALSE,7.564562,Our Futures _2015_,Our Futures _2015_::p0055,10
+1,I'm gonna make him an offer he can't refuse.,The Godfather,v1_authority,v1,True,FALSE,7.594228,Our Futures _2015_,Our Futures _2015_::p0055,10
+1,I'm gonna make him an offer he can't refuse.,The Godfather,v2,v2,False,9,5.241451,Angel-A _2005_,Angel-A _2005_::p0031,10
+1,I'm gonna make him an offer he can't refuse.,The Godfather,v2_authority,v2,True,4,5.242195,Angel-A _2005_,Angel-A _2005_::p0031,10
+2,May the Force be with you.,Star Wars,v1,v1,False,1,17.918495,Rogue One A Star Wars Story _2016_,Rogue One A Star Wars Story _2016_::p0093,10
+2,May the Force be with you.,Star Wars,v1_authority,v1,True,1,17.920807,Rogue One A Star Wars Story _2016_,Rogue One A Star Wars Story _2016_::p0093,10
+2,May the Force be with you.,Star Wars,v2,v2,False,1,6.849657,Star Wars Episode III - Revenge of the Sith _2005_,Star Wars Episode III - Revenge of the Sith _2005_::p0036,10
+2,May the Force be with you.,Star Wars,v2_authority,v2,True,1,6.850567,Rogue One A Star Wars Story _2016_,Rogue One A Star Wars Story _2016_::p0093,10
+3,"Go ahead, make my day.",Sudden Impact,v1,v1,False,9,29.307408,Back to the Future Part III _1990_,Back to the Future Part III _1990_::p0061,10
+3,"Go ahead, make my day.",Sudden Impact,v1_authority,v1,True,9,29.305530,Back to the Future Part III _1990_,Back to the Future Part III _1990_::p0061,10
+3,"Go ahead, make my day.",Sudden Impact,v2,v2,False,7,9.283321,Back to the Future Part III _1990_,Back to the Future Part III _1990_::p0061,10
+3,"Go ahead, make my day.",Sudden Impact,v2_authority,v2,True,10,9.282258,Back to the Future Part III _1990_,Back to the Future Part III _1990_::p0061,10
+4,I'm the king of the world!,Titanic,v1,v1,False,2,15.083847,Bridget Jones_s Diary _2001_,Bridget Jones_s Diary _2001_::p0035,10
+4,I'm the king of the world!,Titanic,v1_authority,v1,True,1,15.087624,Titanic _1997_,Titanic _1997_::p0025,10
+4,I'm the king of the world!,Titanic,v2,v2,False,4,6.485278,Scary Movie _2000_,Scary Movie _2000_::p0067,10
+4,I'm the king of the world!,Titanic,v2_authority,v2,True,1,6.485468,Titanic _1997_,Titanic _1997_::p0025,10
+5,E.T. phone home.,E.T. the Extra-Terrestrial,v1,v1,False,1,11.923382,E.T. the Extra-Terrestrial _1982_,E.T. the Extra-Terrestrial _1982_::p0046,10
+5,E.T. phone home.,E.T. the Extra-Terrestrial,v1_authority,v1,True,1,11.919192,E.T. the Extra-Terrestrial _1982_,E.T. the Extra-Terrestrial _1982_::p0046,10
+5,E.T. phone home.,E.T. the Extra-Terrestrial,v2,v2,False,1,4.598396,E.T. the Extra-Terrestrial _1982_,E.T. the Extra-Terrestrial _1982_::p0026,10
+5,E.T. phone home.,E.T. the Extra-Terrestrial,v2_authority,v2,True,1,4.598528,E.T. the Extra-Terrestrial _1982_,E.T. the Extra-Terrestrial _1982_::p0026,10
+6,You talking to me?,Taxi Driver,v1,v1,False,FALSE,29.600200,8 Heads in a Duffel Bag _1997_,8 Heads in a Duffel Bag _1997_::p0092,10
+6,You talking to me?,Taxi Driver,v1_authority,v1,True,FALSE,29.602510,It_ _1967_,It_ _1967_::p0055,10
+6,You talking to me?,Taxi Driver,v2,v2,False,FALSE,9.650326,Creed _2015_,Creed _2015_::p0092,10
+6,You talking to me?,Taxi Driver,v2_authority,v2,True,4,9.651060,X-Men Apocalypse _2016_,X-Men Apocalypse _2016_::p0006,10
+7,Here's Johnny!,The Shining,v1,v1,False,1,6.290833,The Shining _1980_,The Shining _1980_::p0060,10
+7,Here's Johnny!,The Shining,v1_authority,v1,True,1,6.287137,The Shining _1980_,The Shining _1980_::p0060,10
+7,Here's Johnny!,The Shining,v2,v2,False,2,1.957763,The Honeymooners _1977_,The Honeymooners _1977_::p0053,10
+7,Here's Johnny!,The Shining,v2_authority,v2,True,1,1.957337,The Shining _1980_,The Shining _1980_::p0060,10
+8,I see dead people.,The Sixth Sense,v1,v1,False,FALSE,26.552516,6 Underground _2019_,6 Underground _2019_::p0072,10
+8,I see dead people.,The Sixth Sense,v1_authority,v1,True,FALSE,26.552463,Scary Movie _2000_,Scary Movie _2000_::p0074,10
+8,I see dead people.,The Sixth Sense,v2,v2,False,5,9.755463,Eight Legged Freaks _2002_,Eight Legged Freaks _2002_::p0005,10
+8,I see dead people.,The Sixth Sense,v2_authority,v2,True,1,9.757201,The Sixth Sense _1999_,The Sixth Sense _1999_::p0031,10
+9,"Houston, we have a problem.",Apollo 13,v1,v1,False,2,3.401095,RocketMan _1997_,RocketMan _1997_::p0000,10
+9,"Houston, we have a problem.",Apollo 13,v1_authority,v1,True,5,3.402170,Scream _1996_,Scream _1996_::p0094,10
+9,"Houston, we have a problem.",Apollo 13,v2,v2,False,2,2.882339,RocketMan _1997_,RocketMan _1997_::p0000,10
+9,"Houston, we have a problem.",Apollo 13,v2_authority,v2,True,6,2.880169,Scream _1996_,Scream _1996_::p0094,10
+10,Why so serious?,The Dark Knight,v1,v1,False,1,22.216734,The Dark Knight _2008_,The Dark Knight _2008_::p0033,10
+10,Why so serious?,The Dark Knight,v1_authority,v1,True,1,22.216435,The Dark Knight _2008_,The Dark Knight _2008_::p0033,10
+10,Why so serious?,The Dark Knight,v2,v2,False,2,5.380651,Flight _2021_,Flight _2021_::p0007,10
+10,Why so serious?,The Dark Knight,v2_authority,v2,True,1,5.380226,The Dark Knight _2008_,The Dark Knight _2008_::p0034,10
+11,I'll be back.,The Terminator,v1,v1,False,FALSE,18.182345,A Good Day to Die Hard _2013_,A Good Day to Die Hard _2013_::p0094,10
+11,I'll be back.,The Terminator,v1_authority,v1,True,FALSE,18.188028,Boyhood _2014_,Boyhood _2014_::p0063,10
+11,I'll be back.,The Terminator,v2,v2,False,FALSE,10.031597,A Star Is Born _1976_,A Star Is Born _1976_::p0018,10
+11,I'll be back.,The Terminator,v2_authority,v2,True,FALSE,10.032407,Alita Battle Angel _2019_,Alita Battle Angel _2019_::p0013,10
+12,Life is like a box of chocolates. You never know what you're gonna get.,Forrest Gump,v1,v1,False,1,5.321669,Forrest Gump _1994_,Forrest Gump _1994_::p0000,10
+12,Life is like a box of chocolates. You never know what you're gonna get.,Forrest Gump,v1_authority,v1,True,1,5.316339,Forrest Gump _1994_,Forrest Gump _1994_::p0000,10
+12,Life is like a box of chocolates. You never know what you're gonna get.,Forrest Gump,v2,v2,False,2,3.437221,Ava _2020_,Ava _2020_::p0006,10
+12,Life is like a box of chocolates. You never know what you're gonna get.,Forrest Gump,v2_authority,v2,True,2,3.438116,Ava _2020_,Ava _2020_::p0006,10
+13,Say hello to my little friend!,Scarface,v1,v1,False,FALSE,23.138145,"20,000 Days on Earth _2014_","20,000 Days on Earth _2014_::p0100",10
+13,Say hello to my little friend!,Scarface,v1_authority,v1,True,FALSE,23.138920,Kick-Ass _2010_,Kick-Ass _2010_::p0096,10
+13,Say hello to my little friend!,Scarface,v2,v2,False,1,10.550099,Scarface _1983_,Scarface _1983_::p0142,10
+13,Say hello to my little friend!,Scarface,v2_authority,v2,True,2,10.550297,Kick-Ass _2010_,Kick-Ass _2010_::p0097,10
+14,To infinity and beyond!,Toy Story,v1,v1,False,2,4.366299,Green Lantern _2011_,Green Lantern _2011_::p0021,10
+14,To infinity and beyond!,Toy Story,v1_authority,v1,True,1,4.366953,Toy Story 3 _2010_,Toy Story 3 _2010_::p0001,10
+14,To infinity and beyond!,Toy Story,v2,v2,False,2,1.919675,Green Lantern _2011_,Green Lantern _2011_::p0021,10
+14,To infinity and beyond!,Toy Story,v2_authority,v2,True,1,1.918368,Toy Story 3 _2010_,Toy Story 3 _2010_::p0090,10
+15,My precious.,The Lord of the Rings: The Two Towers,v1,v1,False,FALSE,4.067414,The Hobbit An Unexpected Journey _2012_,The Hobbit An Unexpected Journey _2012_::p0093,10
+15,My precious.,The Lord of the Rings: The Two Towers,v1_authority,v1,True,FALSE,4.082645,The Hobbit An Unexpected Journey _2012_,The Hobbit An Unexpected Journey _2012_::p0093,10
+15,My precious.,The Lord of the Rings: The Two Towers,v2,v2,False,FALSE,1.462356,The Lord of the Rings The Return of the King _2003_,The Lord of the Rings The Return of the King _2003_::p0000,10
+15,My precious.,The Lord of the Rings: The Two Towers,v2_authority,v2,True,FALSE,1.460788,Guardians of the Galaxy _2014_,Guardians of the Galaxy _2014_::p0085,10
+16,You can't handle the truth!,A Few Good Men,v1,v1,False,1,14.594826,A Few Good Men _1992_,A Few Good Men _1992_::p0174,10
+16,You can't handle the truth!,A Few Good Men,v1_authority,v1,True,1,14.577657,A Few Good Men _1992_,A Few Good Men _1992_::p0174,10
+16,You can't handle the truth!,A Few Good Men,v2,v2,False,1,5.727578,A Few Good Men _1992_,A Few Good Men _1992_::p0175,10
+16,You can't handle the truth!,A Few Good Men,v2_authority,v2,True,6,5.728462,Transformers Rise of the Beasts _2023_,Transformers Rise of the Beasts _2023_::p0033,10
+17,"Keep your friends close, but your enemies closer.",The Godfather Part II,v1,v1,False,1,5.336073,The Godfather Part II _1974_,The Godfather Part II _1974_::p0038,10
+17,"Keep your friends close, but your enemies closer.",The Godfather Part II,v1_authority,v1,True,1,5.336653,The Godfather Part II _1974_,The Godfather Part II _1974_::p0038,10
+17,"Keep your friends close, but your enemies closer.",The Godfather Part II,v2,v2,False,1,4.312417,The Godfather Part II _1974_,The Godfather Part II _1974_::p0038,10
+17,"Keep your friends close, but your enemies closer.",The Godfather Part II,v2_authority,v2,True,1,4.313358,The Godfather Part II _1974_,The Godfather Part II _1974_::p0038,10
+18,"Carpe diem. Seize the day, boys.",Dead Poets Society,v1,v1,False,1,3.362984,Dead Poets Society _1989_,Dead Poets Society _1989_::p0015,10
+18,"Carpe diem. Seize the day, boys.",Dead Poets Society,v1_authority,v1,True,1,3.363976,Dead Poets Society _1989_,Dead Poets Society _1989_::p0015,10
+18,"Carpe diem. Seize the day, boys.",Dead Poets Society,v2,v2,False,1,2.425809,Dead Poets Society _1989_,Dead Poets Society _1989_::p0015,10
+18,"Carpe diem. Seize the day, boys.",Dead Poets Society,v2_authority,v2,True,1,2.426703,Dead Poets Society _1989_,Dead Poets Society _1989_::p0015,10
+19,I feel the need—the need for speed!,Top Gun,v1,v1,False,3,8.228320,G-Force _2009_,G-Force _2009_::p0052,10
+19,I feel the need—the need for speed!,Top Gun,v1_authority,v1,True,1,8.228595,Top Gun _1986_,Top Gun _1986_::p0053,10
+19,I feel the need—the need for speed!,Top Gun,v2,v2,False,1,4.771506,Top Gun _1986_,Top Gun _1986_::p0053,10
+19,I feel the need—the need for speed!,Top Gun,v2_authority,v2,True,1,4.771053,Top Gun _1986_,Top Gun _1986_::p0053,10
+20,Nobody puts Baby in a corner.,Dirty Dancing,v1,v1,False,4,7.831908,Cop Out _2010_,Cop Out _2010_::p0006,10
+20,Nobody puts Baby in a corner.,Dirty Dancing,v1_authority,v1,True,3,7.831319,Cop Out _2010_,Cop Out _2010_::p0006,10
+20,Nobody puts Baby in a corner.,Dirty Dancing,v2,v2,False,5,3.843817,Fanboys _2009_,Fanboys _2009_::p0035,10
+20,Nobody puts Baby in a corner.,Dirty Dancing,v2_authority,v2,True,6,3.842920,Jersey Girl _2004_,Jersey Girl _2004_::p0053,10
+21,You had me at hello.,Jerry Maguire,v1,v1,False,3,22.347718,A Night at the Roxbury _1998_,A Night at the Roxbury _1998_::p0060,10
+21,You had me at hello.,Jerry Maguire,v1_authority,v1,True,2,22.345210,Austin Powers The Spy Who Shagged Me _1999_,Austin Powers The Spy Who Shagged Me _1999_::p0048,10
+21,You had me at hello.,Jerry Maguire,v2,v2,False,7,8.902242,Austin Powers The Spy Who Shagged Me _1999_,Austin Powers The Spy Who Shagged Me _1999_::p0048,10
+21,You had me at hello.,Jerry Maguire,v2_authority,v2,True,5,8.902443,The Lego Batman Movie _2017_,The Lego Batman Movie _2017_::p0020,10

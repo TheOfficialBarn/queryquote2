@@ -1,0 +1,238 @@
+Query: "I'm the king of the world!" | Authority Boost: Off | Index: v2
+Open SQLite connection: 0.001745s
+Tokenize query: 0.001019s
+Prepare BM25 query weights: 0.000036s
+Fetch postings and compute BM25 scores: 3.772158s
+Recover exact phrase candidates: 4.852574s
+Select rerank candidates: 0.001945s
+Fetch rerank passages and authority: 0.073202s
+Apply quote-aware rerank scoring: 0.178977s
+Apply authority filter: 0.000001s
+Sort final scores: 0.001734s
+Fetch final result passages: 0.000123s
+Build SearchResult objects: 0.000014s
+Close SQLite connection: 0.010425s
+---
+Total Time: 8.894209s
+_________________________
+Query: "Here's Johnny!" | Authority Boost: Off | Index: v2
+Open SQLite connection: 0.000921s
+Tokenize query: 0.000033s
+Prepare BM25 query weights: 0.000012s
+Fetch postings and compute BM25 scores: 1.407494s
+Recover exact phrase candidates: 1.271407s
+Select rerank candidates: 0.001267s
+Fetch rerank passages and authority: 0.029622s
+Apply quote-aware rerank scoring: 0.168489s
+Apply authority filter: 0.000001s
+Sort final scores: 0.000924s
+Fetch final result passages: 0.000112s
+Build SearchResult objects: 0.000009s
+Close SQLite connection: 0.002703s
+---
+Total Time: 2.883132s
+_________________________
+Query: "Why so serious?" | Authority Boost: Off | Index: v2
+Open SQLite connection: 0.000471s
+Tokenize query: 0.000024s
+Prepare BM25 query weights: 0.000006s
+Fetch postings and compute BM25 scores: 3.348227s
+Recover exact phrase candidates: 4.552574s
+Select rerank candidates: 0.002039s
+Fetch rerank passages and authority: 0.079279s
+Apply quote-aware rerank scoring: 0.165277s
+Apply authority filter: 0.000000s
+Sort final scores: 0.001583s
+Fetch final result passages: 0.000104s
+Build SearchResult objects: 0.000009s
+Close SQLite connection: 0.008185s
+---
+Total Time: 8.157998s
+_________________________
+Query: "Life is like a box of chocolates. You never know what you're gonna get." | Authority Boost: Off | Index: v2
+Open SQLite connection: 0.000718s
+Tokenize query: 0.000049s
+Prepare BM25 query weights: 0.000007s
+Fetch postings and compute BM25 scores: 4.089305s
+Recover exact phrase candidates: 0.421152s
+Select rerank candidates: 0.001814s
+Fetch rerank passages and authority: 0.083081s
+Apply quote-aware rerank scoring: 0.209099s
+Apply authority filter: 0.000001s
+Sort final scores: 0.002040s
+Fetch final result passages: 0.000135s
+Build SearchResult objects: 0.000010s
+Close SQLite connection: 0.006026s
+---
+Total Time: 4.813702s
+_________________________
+Query: "Nobody puts Baby in a corner." | Authority Boost: Off | Index: v2
+Open SQLite connection: 0.000928s
+Tokenize query: 0.000045s
+Prepare BM25 query weights: 0.000007s
+Fetch postings and compute BM25 scores: 3.027112s
+Recover exact phrase candidates: 2.425884s
+Select rerank candidates: 0.002296s
+Fetch rerank passages and authority: 0.091564s
+Apply quote-aware rerank scoring: 0.175387s
+Apply authority filter: 0.000000s
+Sort final scores: 0.001579s
+Fetch final result passages: 0.000117s
+Build SearchResult objects: 0.000008s
+Close SQLite connection: 0.008734s
+---
+Total Time: 5.733893s
+_________________________
+Query: "You had me at hello." | Authority Boost: Off | Index: v2
+Open SQLite connection: 0.001112s
+Tokenize query: 0.000041s
+Prepare BM25 query weights: 0.000007s
+Fetch postings and compute BM25 scores: 2.604692s
+Recover exact phrase candidates: 11.021307s
+Select rerank candidates: 0.002031s
+Fetch rerank passages and authority: 0.073776s
+Apply quote-aware rerank scoring: 0.161337s
+Apply authority filter: 0.000000s
+Sort final scores: 0.001633s
+Fetch final result passages: 0.000087s
+Build SearchResult objects: 0.000009s
+Close SQLite connection: 0.010068s
+---
+Total Time: 13.876317s
+_________________________
+Query: "Life is like a box of chocolates. You never know what you're gonna get." | Authority Boost: Off | Index: v2
+Open SQLite connection: 0.000458s
+Tokenize query: 0.000060s
+Prepare BM25 query weights: 0.000028s
+Fetch postings and compute BM25 scores: 3.441776s
+Recover exact phrase candidates: 0.350168s
+Select rerank candidates: 0.001813s
+Fetch rerank passages and authority: 0.080860s
+Apply quote-aware rerank scoring: 0.190253s
+Apply authority filter: 0.000000s
+Sort final scores: 0.001629s
+Fetch final result passages: 0.000064s
+Build SearchResult objects: 0.000010s
+Close SQLite connection: 0.005784s
+---
+Total Time: 4.073113s
+_________________________
+Query: "I'm the king of the world!" | Authority Boost: On | Index: v2
+Open SQLite connection: 0.000407s
+Tokenize query: 0.000210s
+Prepare BM25 query weights: 0.000027s
+Fetch postings and compute BM25 scores: 2.906085s
+Recover exact phrase candidates: 4.848213s
+Select rerank candidates: 0.001797s
+Fetch rerank passages and authority: 0.069865s
+Apply quote-aware rerank scoring: 0.170560s
+Apply authority filter: 0.000980s
+Sort final scores: 0.001439s
+Fetch final result passages: 0.000123s
+Build SearchResult objects: 0.000013s
+Close SQLite connection: 0.009986s
+---
+Total Time: 8.009919s
+_________________________
+Query: "Here's Johnny!" | Authority Boost: On | Index: v2
+Open SQLite connection: 0.000719s
+Tokenize query: 0.000026s
+Prepare BM25 query weights: 0.000008s
+Fetch postings and compute BM25 scores: 1.002906s
+Recover exact phrase candidates: 0.942749s
+Select rerank candidates: 0.001287s
+Fetch rerank passages and authority: 0.029929s
+Apply quote-aware rerank scoring: 0.177776s
+Apply authority filter: 0.000785s
+Sort final scores: 0.000797s
+Fetch final result passages: 0.000111s
+Build SearchResult objects: 0.000009s
+Close SQLite connection: 0.002848s
+---
+Total Time: 2.160122s
+_________________________
+Query: "Why so serious?" | Authority Boost: On | Index: v2
+Open SQLite connection: 0.000495s
+Tokenize query: 0.000026s
+Prepare BM25 query weights: 0.000006s
+Fetch postings and compute BM25 scores: 2.363386s
+Recover exact phrase candidates: 4.891823s
+Select rerank candidates: 0.002097s
+Fetch rerank passages and authority: 0.090169s
+Apply quote-aware rerank scoring: 0.168018s
+Apply authority filter: 0.001359s
+Sort final scores: 0.001496s
+Fetch final result passages: 0.000118s
+Build SearchResult objects: 0.000008s
+Close SQLite connection: 0.008762s
+---
+Total Time: 7.527999s
+_________________________
+Query: "Life is like a box of chocolates. You never know what you're gonna get." | Authority Boost: On | Index: v2
+Open SQLite connection: 0.000740s
+Tokenize query: 0.000056s
+Prepare BM25 query weights: 0.000007s
+Fetch postings and compute BM25 scores: 3.804598s
+Recover exact phrase candidates: 0.362837s
+Select rerank candidates: 0.001763s
+Fetch rerank passages and authority: 0.035487s
+Apply quote-aware rerank scoring: 0.185118s
+Apply authority filter: 0.001132s
+Sort final scores: 0.001485s
+Fetch final result passages: 0.000091s
+Build SearchResult objects: 0.000008s
+Close SQLite connection: 0.004780s
+---
+Total Time: 4.398323s
+_________________________
+Query: "Nobody puts Baby in a corner." | Authority Boost: On | Index: v2
+Open SQLite connection: 0.000471s
+Tokenize query: 0.000030s
+Prepare BM25 query weights: 0.000007s
+Fetch postings and compute BM25 scores: 2.415602s
+Recover exact phrase candidates: 1.929909s
+Select rerank candidates: 0.001798s
+Fetch rerank passages and authority: 0.078513s
+Apply quote-aware rerank scoring: 0.172324s
+Apply authority filter: 0.001137s
+Sort final scores: 0.001476s
+Fetch final result passages: 0.000112s
+Build SearchResult objects: 0.000008s
+Close SQLite connection: 0.006408s
+---
+Total Time: 4.608033s
+_________________________
+Query: "You had me at hello." | Authority Boost: On | Index: v2
+Open SQLite connection: 0.000736s
+Tokenize query: 0.000030s
+Prepare BM25 query weights: 0.000007s
+Fetch postings and compute BM25 scores: 2.493117s
+Recover exact phrase candidates: 10.533876s
+Select rerank candidates: 0.001997s
+Fetch rerank passages and authority: 0.056540s
+Apply quote-aware rerank scoring: 0.160359s
+Apply authority filter: 0.001087s
+Sort final scores: 0.001510s
+Fetch final result passages: 0.000083s
+Build SearchResult objects: 0.000008s
+Close SQLite connection: 0.009881s
+---
+Total Time: 13.259466s
+_________________________
+Query: "life is like a box of chocolates you never know what you are going to get" | Authority Boost: Off | Index: v2
+Open SQLite connection: 0.000616s
+Tokenize query: 0.000083s
+Prepare BM25 query weights: 0.000007s
+Fetch postings and compute BM25 scores: 0.000194s
+Recover exact phrase candidates: 0.000134s
+Select rerank candidates: 0.000006s
+Fetch rerank passages and authority: 0.000029s
+Apply quote-aware rerank scoring: 0.000425s
+Apply authority filter: 0.000000s
+Sort final scores: 0.000002s
+Fetch final result passages: 0.000015s
+Build SearchResult objects: 0.000005s
+Close SQLite connection: 0.000217s
+---
+Total Time: 0.001744s
+_________________________
